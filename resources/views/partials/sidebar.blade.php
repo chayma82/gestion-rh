@@ -1,7 +1,7 @@
 <div class="flex flex-col h-full bg-white">
 
     <!-- Logo -->
-    <div class="flex  h-[70px] items-center gap-3 px-6 py-6 border-b border-gray-200">
+    <div class="flex  h-[72px] items-center gap-3 px-6 py-6 border-b border-gray-200">
 
         <div class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-[#E2721B] text-white shrink-0">
             <i class="fa-solid fa-building text-sm"></i>
@@ -19,57 +19,220 @@
     </div>
 
     <!-- Menu -->
-    <ul class="mt-4 flex-1 space-y-1 px-2">
+    <ul class="mt-4 flex-1 space-y-1 px-2 overflow-y-auto">
 
         <li>
             <a href="{{ route('Dashboard.index') }}"
-                class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer text-gray-600 hover:bg-orange-50 hover:text-[#E2721B] transition">
+                @class([
+                    'flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition',
+                    'bg-orange-50 text-[#E2721B]' => request()->routeIs('Dashboard.index'),
+                    'text-gray-600 hover:bg-orange-50 hover:text-[#E2721B]' => !request()->routeIs('Dashboard.index'),
+                ])>
                 <i class="fa-solid fa-table-columns w-4 text-center"></i>
                 <span class="text-sm font-medium">Tableau de bord</span>
             </a>
         </li>
 
-        <li>
+    @php
+        // Couvre tous les noms de routes liés aux employés, y compris
+        // le préfixe singulier "employe." utilisé par certains contrôleurs
+        // (employe.conge.index, employe.avance.index, employe.prime.index).
+        $employesActif = request()->routeIs('employes.*') || request()->routeIs('employe.*');
 
-    <button onclick="toggleEmployes()"
-        class="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-orange-50 hover:text-[#E2721B]">
+        $listeEmployesActif = request()->routeIs(
+            'employes.index', 'employes.create', 'employes.store',
+            'employes.edit', 'employes.update', 'employes.info',
+            'employes.destroy', 'employes.archives', 'employes.desarchiver'
+        );
+
+        $contratsActif = request()->routeIs('employes.contrats.*');
+
+        $congesActif = request()->routeIs('employes.conges.*') || request()->routeIs('employe.conge.index');
+
+        $salairesGroupeActif = request()->routeIs('employes.salaires.*')
+            || request()->routeIs('employes.avances.*')
+            || request()->routeIs('employes.primes.*')
+            || request()->routeIs('employe.avance.index')
+            || request()->routeIs('employe.prime.index');
+
+        $tableauSalairesActif = request()->routeIs('employes.salaires.*');
+        $avancesActif = request()->routeIs('employes.avances.*') || request()->routeIs('employe.avance.index');
+        $primesActif = request()->routeIs('employes.primes.*') || request()->routeIs('employe.prime.index');
+    @endphp
+
+    <li>
+
+        <div @class([
+                'w-full flex items-center justify-between px-4 py-3 rounded-lg',
+                'bg-orange-50 text-[#E2721B]' => $employesActif,
+                'text-gray-600' => !$employesActif,
+            ])>
+
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-users"></i>
+                <span class="text-sm font-medium">Employés</span>
+            </div>
+
+            <i class="fa-solid fa-chevron-down text-xs"></i>
+
+        </div>
+
+        {{-- Sous-menu toujours visible, plus de toggle --}}
+        <ul class="ml-10 mt-2 space-y-2">
+
+            <li>
+                <a href="{{ route('employes.index') }}"
+                    @class([
+                        'block text-sm',
+                        'text-[#E2721B] font-semibold' => $listeEmployesActif,
+                        'text-gray-600 hover:text-[#E2721B]' => !$listeEmployesActif,
+                    ])>
+                    Liste des employés
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('employes.contrats.index') }}"
+                    @class([
+                        'block text-sm',
+                        'text-[#E2721B] font-semibold' => $contratsActif,
+                        'text-gray-600 hover:text-[#E2721B]' => !$contratsActif,
+                    ])>
+                    Contrats
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('employes.conges.index') }}"
+                    @class([
+                        'block text-sm',
+                        'text-[#E2721B] font-semibold' => $congesActif,
+                        'text-gray-600 hover:text-[#E2721B]' => !$congesActif,
+                    ])>
+                    Congés
+                </a>
+            </li>
+
+            <li>
+
+                <div @class([
+                        'w-full flex items-center justify-between py-2',
+                        'text-[#E2721B]' => $salairesGroupeActif,
+                        'text-gray-600' => !$salairesGroupeActif,
+                    ])>
+
+                    <span class="text-sm font-medium">Salaires</span>
+
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+
+                </div>
+
+                {{-- Sous-sous-menu toujours visible, plus de toggle --}}
+                <ul class="ml-5 mt-2 space-y-2">
+
+                    <li>
+                        <a href="{{ route('employes.salaires.index') }}"
+                            @class([
+                                'block text-sm',
+                                'text-[#E2721B] font-semibold' => $tableauSalairesActif,
+                                'text-gray-600 hover:text-[#E2721B]' => !$tableauSalairesActif,
+                            ])>
+                            Tableau de salaires
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('employes.avances.index') }}"
+                            @class([
+                                'block text-sm',
+                                'text-[#E2721B] font-semibold' => $avancesActif,
+                                'text-gray-600 hover:text-[#E2721B]' => !$avancesActif,
+                            ])>
+                            Avances
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('employes.primes.index') }}"
+                            @class([
+                                'block text-sm',
+                                'text-[#E2721B] font-semibold' => $primesActif,
+                                'text-gray-600 hover:text-[#E2721B]' => !$primesActif,
+                            ])>
+                            Primes
+                        </a>
+                    </li>
+
+                </ul>
+
+            </li>
+
+        </ul>
+
+    </li>
+
+    @php
+    // ===== VENTES =====
+    $ventesActif =
+        request()->routeIs('clients.*') ||
+        request()->routeIs('factures.ventes.*');
+
+    $clientsActif = request()->routeIs('clients.*');
+
+    $facturesVentesActif = request()->routeIs('factures.ventes.*');
+
+    // ===== ACHATS =====
+    $achatsActif =
+        request()->routeIs('fournisseurs.*') ||
+        request()->routeIs('factures.achats.*');
+
+    $fournisseursActif = request()->routeIs('fournisseurs.*');
+
+    $facturesAchatsActif = request()->routeIs('factures.achats.*');
+    @endphp
+
+    <!-- ================= VENTES ================= -->
+
+<li>
+
+    <div @class([
+        'w-full flex items-center justify-between px-4 py-3 rounded-lg',
+        'bg-orange-50 text-[#E2721B]' => $ventesActif,
+        'text-gray-600' => !$ventesActif,
+    ])>
 
         <div class="flex items-center gap-3">
-            <i class="fa-solid fa-users"></i>
-            <span>Employés</span>
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="text-sm font-medium">Ventes</span>
         </div>
 
         <i class="fa-solid fa-chevron-down text-xs"></i>
 
-    </button>
+    </div>
 
-    <ul id="menuEmployes" class="hidden ml-10 mt-2 space-y-2">
+    <ul class="ml-10 mt-2 space-y-2">
 
+        <!-- Clients -->
         <li>
-            <a href="{{ route('employes.index') }}"
-                class="block text-sm text-gray-600 hover:text-[#E2721B]">
-                Liste des employés
+            <a href="{{ route('clients.index') }}"
+                @class([
+                    'block text-sm',
+                    'text-[#E2721B] font-semibold' => $clientsActif,
+                    'text-gray-600 hover:text-[#E2721B]' => !$clientsActif,
+                ])>
+                Clients
             </a>
         </li>
 
+        <!-- Factures ventes -->
         <li>
-            <a href="{{ route('employes.contrats.index') }}"
-                class="block text-sm text-gray-600 hover:text-[#E2721B]">
-                Contrats
-            </a>
-        </li>
-
-        <li>
-            <a href="{{ route('employes.conges.index') }}"
-                class="block text-sm text-gray-600 hover:text-[#E2721B]">
-                Congés
-            </a>
-        </li>
-
-        <li>
-            <a href="{{ route('employes.salaires.index') }}"
-                class="block text-sm text-gray-600 hover:text-[#E2721B]">
-                Salaires
+            <a href="{{ route('factures.ventes.index') }}"
+                @class([
+                    'block text-sm',
+                    'text-[#E2721B] font-semibold' => $facturesVentesActif,
+                    'text-gray-600 hover:text-[#E2721B]' => !$facturesVentesActif,
+                ])>
+                Factures clients
             </a>
         </li>
 
@@ -77,20 +240,55 @@
 
 </li>
 
-<script>
-function toggleEmployes() {
-    document.getElementById("menuEmployes").classList.toggle("hidden");
-}
-</script>
 
+<!-- ================= ACHATS ================= -->
+
+<li>
+
+    <div @class([
+        'w-full flex items-center justify-between px-4 py-3 rounded-lg',
+        'bg-orange-50 text-[#E2721B]' => $achatsActif,
+        'text-gray-600' => !$achatsActif,
+    ])>
+
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-truck"></i>
+            <span class="text-sm font-medium">Achats</span>
+        </div>
+
+        <i class="fa-solid fa-chevron-down text-xs"></i>
+
+    </div>
+
+    <ul class="ml-10 mt-2 space-y-2">
+
+        <!-- Fournisseurs -->
         <li>
-            <a href="{{ route('factures.index') ?? '#' }}"
-                class="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer text-gray-600 hover:bg-orange-50 hover:text-[#E2721B] transition">
-                <i class="fa-solid fa-file-invoice w-4 text-center"></i>
-                <span class="text-sm font-medium">Factures</span>
+            <a href="{{ route('fournisseurs.index') }}"
+                @class([
+                    'block text-sm',
+                    'text-[#E2721B] font-semibold' => $fournisseursActif,
+                    'text-gray-600 hover:text-[#E2721B]' => !$fournisseursActif,
+                ])>
+                Fournisseurs
             </a>
         </li>
 
+        <!-- Factures achats -->
+        <li>
+            <a href="{{ route('factures.achats.index') }}"
+                @class([
+                    'block text-sm',
+                    'text-[#E2721B] font-semibold' => $facturesAchatsActif,
+                    'text-gray-600 hover:text-[#E2721B]' => !$facturesAchatsActif,
+                ])>
+                Factures fournisseurs
+            </a>
+        </li>
+
+    </ul>
+
+</li>
     </ul>
     <!-- Déconnexion -->
     <div class="px-2 pb-4 border-t border-gray-100 pt-3">

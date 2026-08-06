@@ -3,7 +3,8 @@
     'label',
     'options' => [],
     'value' => '',
-    'required' => false
+    'required' => false,
+    'id' => null,
 ])
 
 <div class="flex flex-col">
@@ -19,16 +20,17 @@
     <div class="relative">
 
         <select
+            @if($id) id="{{ $id }}" @endif
             name="{{ $name }}"
             @if($required) required @endif
             class="w-full appearance-none rounded-lg border border-gray-300 px-4 py-2.5 pr-10 text-sm text-gray-800 bg-white outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
 
             <option value="" class="text-gray-400">Sélectionner...</option>
 
-            @foreach($options as $option)
+            @foreach($options as $key => $option)
                 <option
-                    value="{{ $option }}"
-                    {{ old($name, $value) == $option ? 'selected' : '' }}>
+                    value="{{ $key }}"
+                    {{ old($name, $value) == $key ? 'selected' : '' }}>
                     {{ $option }}
                 </option>
             @endforeach

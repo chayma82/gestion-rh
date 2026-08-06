@@ -15,25 +15,26 @@
 
 <body class="bg-white">
 
-<div class="min-h-screen relative">
+<div class="min-h-screen flex">
 
-    <!-- Overlay (fond assombri derrière le sidebar) -->
-    <div
-        id="sidebarOverlay"
-        class="fixed inset-0 bg-black/30 opacity-0 pointer-events-none transition-opacity duration-300 z-40">
-    </div>
-
-    <!-- Sidebar (overlay, ne prend pas de place dans le flux) -->
+    <!-- Sidebar : visible par défaut (dans le flux, pas en overlay).
+         Le hamburger réduit sa largeur à 0 pour la faire disparaître,
+         c'est l'inverse du comportement précédent. -->
     <aside
         id="sidebar"
-        class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl -translate-x-full transition-transform duration-300 z-50">
+        class="w-64 shrink-0 border-r border-gray-200 overflow-hidden transition-all duration-300 ease-in-out">
 
-        @include('partials.sidebar')
+        {{-- Largeur fixe à l'intérieur : le contenu ne se réarrange pas
+             pendant l'animation, il est juste "coupé" par overflow-hidden
+             sur le parent quand celui-ci se réduit à w-0. --}}
+        <div class="w-64 h-full">
+            @include('partials.sidebar')
+        </div>
 
     </aside>
 
-    <!-- Contenu (occupe toute la largeur, jamais décalé) -->
-    <div id="main" class="min-h-screen">
+    <!-- Contenu -->
+    <div id="main" class="flex-1 min-h-screen min-w-0">
 
         @include('partials.topbar')
 
@@ -48,38 +49,22 @@
 <script>
 
 const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('sidebarOverlay');
 const btn = document.getElementById('toggleSidebar');
 
-function openSidebar() {
-    sidebar.classList.remove('-translate-x-full');
-    sidebar.classList.add('translate-x-0');
-
-    overlay.classList.remove('opacity-0', 'pointer-events-none');
-    overlay.classList.add('opacity-100', 'pointer-events-auto');
-}
-
 function closeSidebar() {
-    sidebar.classList.add('-translate-x-full');
-    sidebar.classList.remove('translate-x-0');
-
-    overlay.classList.add('opacity-0', 'pointer-events-none');
-    overlay.classList.remove('opacity-100', 'pointer-events-auto');
+    sidebar.classList.remove('w-64');
+    sidebar.classList.add('w-0', 'border-r-0');
 }
 
-btn.addEventListener('click', (e) => {
-    e.stopPropagation();
+function openSidebar() {
+    sidebar.classList.remove('w-0', 'border-r-0');
+    sidebar.classList.add('w-64');
+}
 
-    const isOpen = sidebar.classList.contains('translate-x-0');
-
-    if (isOpen) {
-        closeSidebar();
-    } else {
-        openSidebar();
-    }
+btn.addEventListener('click', () => {
+    const isOpen = sidebar.classList.contains('w-64');
+    isOpen ? closeSidebar() : openSidebar();
 });
-
-overlay.addEventListener('click', closeSidebar);
 
 </script>
 

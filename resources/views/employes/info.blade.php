@@ -2,14 +2,10 @@
 
 @section('content')
 
-<div class="max-w-4xl mx-auto">
 
-    <x-Employeinfo_conge :employee="$employee ?? null" active="informations">
+    <x-Employeinfo_conge :employe="$employe ?? null" active="informations">
         <x-slot:actions>
-            <a href="{{ route('employes.index') }}"
-            class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition">
-            Annuler
-            </a>
+            <x-annuler />
             <a href="{{ route('employes.create') }}"
                 class="px-5 py-2.5 rounded-lg bg-[#E2721B] hover:bg-[#D16212] text-white text-sm font-medium shadow-md shadow-orange-600/10 transition">
                 Modifier Profil
@@ -22,19 +18,23 @@
         <x-section-title number="" title="Détails Personnels" icon="fa-user"/>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
-            <x-detail label="Matricule">{{ $employee->matricule ?? '123456789' }}</x-detail>
-            <x-detail label="Date de Naissance">{{ $employee->date_naissance ?? '14 Mai 1985 (40 ans)' }}</x-detail>
+            <x-detail label="Matricule">{{ $employe->matricule ?? '_' }}</x-detail>
+            <x-detail label="Date de Naissance">{{ $employe->date_naissance?->format('Y-m-d') ?? '_' }}</x-detail>
 
-            <x-detail label="Nom Complet">{{ $employee->nom_complet ?? 'Jean-Marc Bernard' }}</x-detail>
-            <x-detail label="Lieu de Naissance">{{ $employee->lieu_naissance ?? 'Lyon, France' }}</x-detail>
+            <x-detail label="Nom Complet">{{ $employe->nom ?? '_' }} {{ $employe->prenom ?? '' }}</x-detail>
+            <x-detail label="Lieu de Naissance">{{ $employe->lieu_naissance ?? '_' }}</x-detail>
 
-            <x-detail label="Genre">{{ $employee->sexe ?? 'Masculin' }}</x-detail>
-            <x-detail label="CIN / Passeport">{{ $employee->cin_passeport ?? '00000000' }}</x-detail>
+            {{-- Correction : $employee -> $employe (faute de frappe qui
+                 rendait le genre et la nationalité toujours vides) --}}
+            <x-detail label="Genre">
+                {{ $employe->sexe == 'M' ? 'Homme' : ($employe->sexe == 'F' ? 'Femme' : '_') }}
+            </x-detail>            <x-detail label="CIN / Passeport">{{ $employe->cin_passeport ?? '_' }}</x-detail>
 
-            <x-detail label="Nationalité">{{ $employee->nationalite ?? 'Française' }}</x-detail>
-            <x-detail label="Nombre d'enfants">{{ $employee->nb_enfants ?? '—' }}</x-detail>
+            <x-detail label="Nationalité">{{ $employe->nationalite ?? '_' }}</x-detail>
 
-            <x-detail label="Situation Familiale">{{ $employee->situation_familiale ?? '—' }}</x-detail>
+            <x-detail label="Situation Familiale">{{ $employe->situation_familiale ?? '—' }}</x-detail>
+            <x-detail label="Nombre d'enfants">{{ $employe->nb_enfants ?? '—' }}</x-detail>
+
         </div>
     </x-card>
 
@@ -48,7 +48,7 @@
                 <p class="text-xs text-gray-400 mb-1">Téléphone Professionnel</p>
                 <p class="text-sm font-medium text-gray-800 flex items-center gap-2">
                     <i class="fa-solid fa-phone text-gray-400 text-xs"></i>
-                    {{ $employee->tel_pro ?? '+33 1 23 45 67 89' }}
+                    {{ $employe->tel_pro ?? '_' }}
                 </p>
             </div>
 
@@ -56,25 +56,25 @@
                 <p class="text-xs text-gray-400 mb-1">E-mail Professionnel</p>
                 <p class="text-sm font-medium text-gray-800 flex items-center gap-2">
                     <i class="fa-solid fa-envelope text-gray-400 text-xs"></i>
-                    {{ $employee->email_pro ?? 'j.bernard@lumina-hrms.com' }}
+                    {{ $employe->email_pro ?? '_' }}
                 </p>
             </div>
 
-            <x-detail label="Téléphone Personnel">{{ $employee->tel_perso ?? '+33 6 12 34 56 78' }}</x-detail>
+            <x-detail label="Téléphone Personnel">{{ $employe->tel_perso ?? '_' }}</x-detail>
 
             <div>
                 <p class="text-xs text-gray-400 mb-1">E-mail Personnel</p>
                 <p class="text-sm font-medium text-gray-800 flex items-center gap-2">
                     <i class="fa-solid fa-envelope text-gray-400 text-xs"></i>
-                    {{ $employee->email_perso ?? 'jm.bernard.private@email.com' }}
+                    {{ $employe->email_perso ?? '_' }}
                 </p>
             </div>
 
             <div class="md:col-span-2">
                 <p class="text-xs text-gray-400 mb-1">Adresse Domicile</p>
                 <p class="text-sm font-medium text-gray-800">
-                    {{ $employee->adresse ?? '12 Avenue des Champs-Élysées,' }}<br>
-                    {{ $employee->code_postal ?? '75008' }} {{ $employee->ville ?? 'Paris, France' }}
+                    {{ $employe->adresse ?? '12 Avenue des Champs-Élysées,' }}<br>
+                    {{ $employe->code_postal ?? '_' }} {{ $employe->ville ?? '_' }}
                 </p>
             </div>
 
@@ -87,25 +87,31 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
 
-            <x-detail label="Département">{{ $employee->departement ?? 'Direction Technique / IT' }}</x-detail>
-            <x-detail label="Intitulé du Poste">{{ $employee->poste_occupe ?? 'Senior Project Manager' }}</x-detail>
-
+<x-detail label="Département">{{ $employe->departement?->libelle ?? '_' }}</x-detail>
+            {{-- Correction : le champ fillable s'appelle posteOccupe (camelCase),
+                 pas poste_occupe --}}
+<x-detail label="Intitulé du Poste">{{ $employe->poste?->libelle ?? '_' }}</x-detail>
             <div>
                 <p class="text-xs text-gray-400 mb-1">Statut Employé</p>
                 <span class="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-                    {{ strtoupper($employee->statut_employe ?? 'ACTIF') }}
+                    {{ strtoupper($employe->statutEmploye ?? '_') }}
                 </span>
             </div>
 
-            <x-detail label="Date d'embauche">{{ $employee->date_embauche ?? '01 Mars 2018' }}</x-detail>
+            <x-detail label="Date d'embauche">{{ $employe->date_embauche?->format('Y-m-d') ?? 'Indéterminée' }}</x-detail>
 
-            <x-detail label="Date de début de fonction">{{ $employee->date_prisePoste ?? '15 Mars 2018' }}</x-detail>
 
+            {{-- Correction : conges_cumules n'existait pas comme accessor.
+                 Utilisation de l'accessor getCongesCumulesAttribute() ajouté
+                 au modèle Employe, plus affichage du solde restant --}}
             <div>
                 <p class="text-xs text-gray-400 mb-1">Congés Cumulés</p>
                 <p class="text-sm font-medium text-gray-800">
-                    {{ $employee->conges_cumules ?? '24.5 jours' }}
-                    <span class="text-xs text-gray-400 font-normal">(Période en cours)</span>
+                    {{ $employe->conges_cumules ?? 0 }} jours pris
+                    <span class="text-xs text-gray-400 font-normal">
+                        / {{ $employe->nbreJourCongeAqcuise ?? 0 }} acquis
+                        (solde : {{ $employe->solde_conge ?? 0 }})
+                    </span>
                 </p>
             </div>
 
@@ -122,36 +128,42 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
-            <x-detail label="Nom du Contact">{{ $employee->nom_urgence ?? 'Marie-Claire Bernard' }}</x-detail>
-            <x-detail label="Relation">{{ $employee->lien_parente ?? 'Épouse' }}</x-detail>
+            <x-detail label="Nom du Contact">{{ $employe->nom_contact_urgence ?? '_' }}</x-detail>
+            <x-detail label="Relation">{{ $employe->lien_parente ?? '_' }}</x-detail>
 
             <div>
                 <p class="text-xs text-gray-400 mb-1">Téléphone</p>
-                <p class="text-sm font-semibold ">{{ $employee->tel_urgence ?? '+33 6 88 77 66 55' }}</p>
+                <p class="text-sm font-semibold ">{{ $employe->telephone_urgence ?? '_' }}</p>
             </div>
 
-            <x-detail label="Adresse">{{ $employee->adresse_urgence ?? 'Idem domicile principal' }}</x-detail>
+            <x-detail label="Adresse">{{ $employe->adresse_urgence ?? '_' }}</x-detail>
         </div>
     </x-card>
+
+
+@php
+    // On récupère le contrat "en cours de vie" (actif OU à venir) et non plus
+    // uniquement le contrat actif : sinon un contrat signé mais pas encore
+    // démarré n'apparaissait jamais sur la fiche employé.
+    $contrat = $employe->contratEnCours;
+@endphp
 
     {{-- Informations Contractuelles --}}
     <x-card>
         <x-section-title number="" title="Informations Contractuelles" icon="fa-file-contract"/>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
-            <x-detail label="Type de contrat">{{ $employee->type_contrat_final ?? 'CDI' }}</x-detail>
-            <x-detail label="Numéro de contrat">{{ $employee->numero_contrat ?? 'CONT-2018-0452' }}</x-detail>
+            <x-detail label="Type de contrat">{{ $contrat->typeContrat ?? 'Pas de contrat' }}</x-detail>
+            <x-detail label="Numéro de contrat">{{ $contrat->numcontrat ?? 'Pas de contrat' }}</x-detail>
 
-            <x-detail label="Date de début">{{ $employee->date_debut ?? '01 Mars 2018' }}</x-detail>
-            <x-detail label="Date de fin">{{ $employee->date_fin ?? 'Indéterminée' }}</x-detail>
+            <x-detail label="Date de début">{{ $contrat?->date_debut?->format('Y-m-d') ?? 'Indéterminée' }}</x-detail>
+<x-detail label="Date de fin">{{ $contrat?->date_fin?->format('Y-m-d') ?? 'Indéterminée' }}</x-detail>
+            {{-- Correction : accessor salaire_net (voir Employe.php),
+                 corrigé pour trier par date_creation --}}
+            <x-detail label="Salaire de base">{{ $employe->salaire_net ?? 0 }} DT / mois</x-detail>
 
-            <x-detail label="Salaire de base">{{ $employee->salaire ?? '65,000 €' }} / an</x-detail>
-            <x-detail label="Ancienneté">{{ $employee->anciennete ?? '5 ans et 10 mois' }}</x-detail>
-
-            <x-detail label="Chargé du Recrutement">{{ $employee->NomRecruteur ?? 'Marc Antoine' }}</x-detail>
+            <x-detail label="Chargé du Recrutement">{{ $contrat->recreteur ?? '_' }}</x-detail>
         </div>
     </x-card>
-
-</div>
 
 @endsection

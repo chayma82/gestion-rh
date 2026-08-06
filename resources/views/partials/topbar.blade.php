@@ -7,16 +7,43 @@
         <i class="fa-solid fa-bars text-base"></i>
     </button>
 
-    <!-- Barre de recherche -->
-    <div class="relative flex-1 max-w-md">
+    @php
+        // Titre de page calculé depuis la route courante
+        $pageTitle = match (true) {
+            request()->routeIs('Dashboard.index')          => 'Tableau de bord',
 
-        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            // Employés
+            request()->routeIs('employes.contrats.*')      => 'Contrats',
+            request()->routeIs('employes.conges.*'),
+            request()->routeIs('employe.conge.index')      => 'Congés',
+            request()->routeIs('employes.salaires.*')      => 'Salaires',
+            request()->routeIs('employes.avances.*'),
+            request()->routeIs('employe.avance.index')     => 'Avances',
+            request()->routeIs('employes.primes.*'),
+            request()->routeIs('employe.prime.index')      => 'Primes',
+            request()->routeIs('employes.archives')        => 'Employés archivés',
+            request()->routeIs('employes.*'),
+            request()->routeIs('employe.*')                 => 'Employés',
 
-        <input
-            type="text"
-            placeholder="Rechercher des employés, Factures..."
-            class="w-full pl-11 pr-4 py-2.5 bg-gray-100 border border-transparent rounded-xl text-sm text-gray-700 placeholder-gray-400 outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
+            // Ventes
+            request()->routeIs('clients.*')         => 'Clients',
+            request()->routeIs('ventes.clients.*')         => 'Clients',
+            request()->routeIs('factures.ventes.*')          => 'Factures clients',
 
+            // Achats
+            request()->routeIs('fournisseurs.*')    => 'Fournisseurs',
+            request()->routeIs('achats.fournisseurs.*')    => 'Fournisseurs',
+            request()->routeIs('factures.achats.*')        => 'Factures fournisseurs',
+
+            default                                        => 'Portail RH',
+        };
+    @endphp
+
+    <!-- Titre de la page -->
+    <div class="flex items-center gap-2 min-w-0">
+        <span class="text-sm text-gray-400 hidden sm:inline">Portail RH</span>
+        <i class="fa-solid fa-chevron-right text-gray-300 text-xs hidden sm:inline"></i>
+        <h1 class="text-base font-semibold text-gray-800 truncate">{{ $pageTitle }}</h1>
     </div>
 
     <div class="flex-1"></div>

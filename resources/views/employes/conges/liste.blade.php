@@ -16,12 +16,14 @@
                 Suivre les demandes et l'historique des congés des employés.
             </p>
         </div>
+        <div class="flex gap-3">
+        <x-annuler />
         <a href="{{ route('employes.conges.create') }}"
             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#E2721B] hover:bg-[#D16212] text-white text-sm font-medium shadow-md shadow-orange-600/10 transition">
             <i class="fa-solid fa-user-plus"></i>
             Ajouter un conge
         </a>
-
+        </div>
 
     </div>
 
@@ -38,6 +40,7 @@
         <div class="relative flex-1">
             <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
             <input
+                id="searchConge"
                 type="text"
                 name="q"
                 value="{{ request('q') }}"
@@ -49,10 +52,9 @@
             <select name="type"
                 class="appearance-none bg-white border border-gray-300 hover:bg-gray-50 rounded-lg pl-4 pr-10 py-3 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
                 <option value="">Tous les types</option>
-                <option value="cp">Congés Payés (CP)</option>
-                <option value="rtt">RTT</option>
-                <option value="sans_solde">Sans solde</option>
-                <option value="maladie">Maladie</option>
+                <option value="paye" @selected(request('type') == 'paye')>Congés Payés (CP)</option>
+                <option value="sans_solde" @selected(request('type') == 'sans_solde')>Sans solde</option>
+                <option value="maladie" @selected(request('type') == 'maladie')>Maladie</option>
             </select>
             <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
         </div>
@@ -80,83 +82,54 @@
                 </tr>
             </thead>
 
-            <tbody class="divide-y divide-gray-100">
+           <tbody id="tableConges" class="divide-y divide-gray-100">
 
-                @php
-                    $conges = $conges ?? [
-                        ['employe' => 'Sarah Amri', 'avatar' => 'SA', 'type' => 'Congés Payés (CP)', 'debut' => '15/07/2024', 'fin' => '19/07/2024', 'duree' => '5 jours', 'couleur' => 'bg-orange-500'],
-                        ['employe' => 'Karim Ben Salah', 'avatar' => 'KB', 'type' => 'RTT', 'debut' => '10/05/2024', 'fin' => '10/05/2024', 'duree' => '1 jour', 'couleur' => 'bg-yellow-500'],
-                        ['employe' => 'Nour Trabelsi', 'avatar' => 'NT', 'type' => 'Sans solde', 'debut' => '01/04/2024', 'fin' => '03/04/2024', 'duree' => '3 jours', 'couleur' => 'bg-gray-400'],
-                        ['employe' => 'Amine Jlassi', 'avatar' => 'AJ', 'type' => 'Maladie', 'debut' => '12/02/2024', 'fin' => '14/02/2024', 'duree' => '3 jours', 'couleur' => 'bg-red-500'],
-                        ['employe' => 'Yassine Kacem', 'avatar' => 'YK', 'type' => 'Congés Payés (CP)', 'debut' => '05/08/2024', 'fin' => '09/08/2024', 'duree' => '5 jours', 'couleur' => 'bg-orange-500'],
-                        ['employe' => 'Ines Mansour', 'avatar' => 'IM', 'type' => 'RTT', 'debut' => '20/06/2024', 'fin' => '20/06/2024', 'duree' => '1 jour', 'couleur' => 'bg-yellow-500'],
-                    ];
-                @endphp
+@forelse($conges as $conge)
 
-                @forelse($conges as $conge)
+<tr class="hover:bg-gray-50 transition">
 
-                    <tr class="hover:bg-gray-50 transition">
+    <td class="px-6 py-4">
+        <span class="font-semibold text-gray-900 text-sm">
+            {{ $conge->employe?->matricule_nom_complet ?? (($conge->employe?->nom ?? '') . ' ' . ($conge->employe?->prenom ?? '')) }}
+        </span>
+    </td>
 
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
+    <td class="px-6 py-4">
+        <span class="text-sm font-medium text-gray-600">
+            {{ $conge->type_conge }}
+        </span>
+    </td>
 
-                                <span class="font-semibold text-gray-900 text-sm">{{ $conge['employe'] }}</span>
-                            </div>
-                        </td>
+    <td class="px-6 py-4 text-sm text-gray-600">
+        {{ \Carbon\Carbon::parse($conge->date_debut)->format('d/m/Y') }}
+    </td>
 
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2 h-2  shrink-0"></span>
-                                <span class="text-sm font-medium text-gray-600">{{ $conge['type'] }}</span>
-                            </div>
-                        </td>
+    <td class="px-6 py-4 text-sm text-gray-600">
+        {{ \Carbon\Carbon::parse($conge->date_fin)->format('d/m/Y') }}
+    </td>
 
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            {{ $conge['debut'] }}
-                        </td>
+    <td class="px-6 py-4 text-sm font-semibold text-gray-800">
+        {{ \Carbon\Carbon::parse($conge->date_debut)->diffInDays(\Carbon\Carbon::parse($conge->date_fin)) + 1 }}
+        jour(s)
+    </td>
 
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            {{ $conge['fin'] }}
-                        </td>
+</tr>
 
-                        <td class="px-6 py-4 text-sm font-semibold text-gray-800">
-                            {{ $conge['duree'] }}
-                        </td>
+@empty
 
-                    </tr>
+<tr>
+    <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+        Aucun congé trouvé.
+    </td>
+</tr>
 
-                @empty
+@endforelse
 
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-sm">
-                            Aucun congé trouvé.
-                        </td>
-                    </tr>
-
-                @endforelse
-
-            </tbody>
+</tbody>
 
         </table>
 
     </div>
-
-    <!-- Pagination -->
-    @if(isset($conges) && $conges instanceof \Illuminate\Pagination\LengthAwarePaginator)
-
-        <div class="flex justify-between items-center mt-5">
-
-            <span class="text-sm text-gray-500">
-                Affichage {{ $conges->firstItem() ?? 0 }} - {{ $conges->lastItem() ?? 0 }} sur {{ $conges->total() }} congés
-            </span>
-
-            <div class="flex items-center gap-2">
-                {{ $conges->onEachSide(1)->links() }}
-            </div>
-
-        </div>
-
-    @endif
 
     <!-- Statistiques -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-8">
@@ -167,18 +140,17 @@
             </div>
             <div>
                 <h4 class="text-xs text-gray-500 uppercase tracking-wide">Employés en congé aujourd'hui</h4>
-                <p class="text-2xl font-bold text-gray-900 mt-0.5">{{ $enCongeAujourdhui ?? '3' }}</p>
+                <p class="text-2xl font-bold text-gray-900 mt-0.5">{{ $enCongeAujourdhui }}</p>
             </div>
         </div>
 
         <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5 flex items-center gap-4">
-
-             <div class="w-11 h-11 rounded-xl bg-orange-50 text-[#E2721B] flex items-center justify-center">
+            <div class="w-11 h-11 rounded-xl bg-orange-50 text-[#E2721B] flex items-center justify-center">
                 <i class="fa-solid fa-umbrella-beach"></i>
             </div>
             <div>
-                <h4 class="text-xs text-gray-500 uppercase tracking-wide">Employés en congé demain </h4>
-                <p class="text-2xl font-bold text-gray-900 mt-0.5">{{ $congesApprouves ?? '5' }}</p>
+                <h4 class="text-xs text-gray-500 uppercase tracking-wide">Employés en congé demain</h4>
+                <p class="text-2xl font-bold text-gray-900 mt-0.5">{{ $congesDemain}}</p>
             </div>
         </div>
 
@@ -187,15 +159,46 @@
                 <i class="fa-regular fa-clock"></i>
             </div>
             <div>
-                <h4 class="text-xs text-gray-500 uppercase tracking-wide">Employés en congé sette semaine</h4>
-                <p class="text-2xl font-bold text-gray-900 mt-0.5">{{ $congesAttente ?? '9' }}</p>
+                <h4 class="text-xs text-gray-500 uppercase tracking-wide">Employés en congé cette semaine</h4>
+                <p class="text-2xl font-bold text-gray-900 mt-0.5">{{ $congesCetteSemaine  }}</p>
             </div>
         </div>
-
-
 
     </div>
 
 </div>
+
+<script>
+
+let timer;
+
+document.getElementById('searchConge')
+.addEventListener('input', function () {
+
+    clearTimeout(timer);
+
+    let recherche = this.value;
+
+    timer = setTimeout(function () {
+
+        fetch("{{ route('employes.conges.index') }}?q=" + recherche)
+
+        .then(response => response.text())
+
+        .then(html => {
+
+            let parser = new DOMParser();
+            let doc = parser.parseFromString(html, 'text/html');
+
+            document.getElementById('tableConges').innerHTML =
+                doc.getElementById('tableConges').innerHTML;
+
+        });
+
+    }, 300);
+
+});
+
+</script>
 
 @endsection

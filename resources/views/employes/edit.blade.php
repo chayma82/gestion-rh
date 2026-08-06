@@ -10,20 +10,18 @@
             Les Coordonnées de l'Employé
         </h1>
 
-        <a href="{{ route('employes.index') }}"
-            class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition">
-            Annuler
-        </a>
+        <x-annuler />
 
     </div>
 
-    <form action="{{ route('employes.store') }}"
+    <form action="{{ route('employes.update', $employe->id) }}"
           method="POST"
           enctype="multipart/form-data">
 
         @csrf
+        @method('PUT')
 
-        @include('formulaires.formmodifemploye')
+        @include('formulaires.formmodifemploye', ['employe' => $employe])
 
         <div class="flex justify-end mt-2">
              <button

@@ -1,156 +1,157 @@
-@extends('layouts.layout')
+{{-- =========================
+    1. Informations employé
+========================= --}}
+<x-card>
 
-@section('content')
 
-<div class="max-w-7xl mx-auto">
+    <x-select
+        id="employe_id"
+        name="employe_id"
+        label="Employé"
+        :options="$employes->pluck('matricule_nom_complet', 'id')->toArray()"
+        required="true"
+    />
 
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
 
-        <h1 class="text-2xl font-bold text-gray-900">
-            Informations du contrat
-        </h1>
+</x-card>
 
-        <a href="{{ route('employes.contrats.index') }}"
-            class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition">
-            Annuler
-        </a>
+{{-- =========================
+    2. Informations professionnelles
+========================= --}}
+<x-card>
+
+    <x-section-title
+        number="2"
+        title="Informations Professionnelles"
+        icon="fa-briefcase"/>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <x-select
+            id="departement_id"
+            name="departement_id"
+            label="Département"
+            :options="$departements->pluck('libelle', 'id')->toArray()"
+            required="true"/>
+
+        <x-select
+            id="poste_id"
+            name="poste_id"
+            label="Poste occupé"
+            :options="$postes->pluck('libelle', 'id')->toArray()"
+            required="true"/>
+
+        <x-field
+            type="date"
+            name="date_embauche"
+            label="Date d'embauche"
+            required="true"/>
+
+
+
+        <x-field
+            type="number"
+            name="jours_conges"
+            label="Jours de congés acquis"
+            required="true"/>
 
     </div>
 
-    <form action="{{ route('employes.contrats.store') }}"
-          method="POST"
-          enctype="multipart/form-data">
+</x-card>
 
-        @csrf
+{{-- =========================
+    3. Informations contractuelles
+    (le numéro de contrat n'apparaît pas ici : il est généré
+    automatiquement côté serveur au format
+    CNT-codeCategorie-idEmploye-idContrat-anneeEmbauche.
+    Le matricule employé est lui aussi généré automatiquement côté serveur
+    au format codeDepartement-codePoste-idEmploye-idClient-anneeEmbauche)
+========================= --}}
+<x-card>
 
-        {{-- =========================
-            1. Informations employé
-        ========================= --}}
-        <x-card>
+    <x-section-title
+        number="3"
+        title="Informations Contractuelles"
+        icon="fa-file-contract"/>
 
-            <x-section-title
-                number="1"
-                title="Informations de l'employé"
-                icon="fa-user"/>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            <div class="grid grid-cols-1 mb-6">
+        <x-select
+            name="type_contrat"
+            label="Type de contrat"
+            :options="[
+                'CDI' => 'CDI',
+                'CDD' => 'CDD',
+                'Stage' => 'Stage',
+                'Freelance' => 'Freelance',
+                'Consultant' => 'Consultant',
+                'Interimaire' => 'Intérimaire'
+            ]"
+            required="true"
+        />
 
-                <x-select
-                    name="employe"
-                    label="Employé"
-                    :options="[
-                        'EMP001 - Ahmed Ben Ali',
-                        'EMP002 - Sarra Trabelsi',
-                        'EMP003 - Mohamed Salah'
-                    ]"
-                    required="true"/>
+        <x-field
+            type="date"
+            name="date_debut"
+            label="Date de début"
+            required="true"/>
 
-            </div>
+        <x-field
+            type="date"
+            name="date_fin"
+            label="Date de fin"/>
+
+        <x-field
+            name="recruteur"
+            label="Nom du recruteur"
+            required="true"/>
+
+        <x-field
+            type="number"
+            name="salaire"
+            label="Salaire"
+            required="true"/>
+
+    </div>
+
+</x-card>
+
+{{-- =========================
+    Filtre JS : limite le select "Poste occupé" au département choisi.
+    Ne modifie pas les composants x-select existants, s'appuie juste
+    sur leurs id (departement_id / poste_id) déjà présents ci-dessus.
+========================= --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // ---- Filtre Poste selon Département ----
+        // Map id_poste => id_departement, construite depuis la collection $postes
+        const posteDepartementMap = @json($postes->pluck('departement_id', 'id'));
+
+        const departementSelect = document.querySelector('[name="departement_id"]');
+        const posteSelect = document.querySelector('[name="poste_id"]');
+
+        console.log(departementSelect);
+        console.log(posteSelect);
 
 
-        </x-card>
 
-        {{-- =========================
-            2. Informations professionnelles
-        ========================= --}}
-        <x-card>
+        if (departementSelect && posteSelect) {
+            departementSelect.addEventListener('change', function () {
+                const departementId = this.value;
 
-            <x-section-title
-                number="2"
-                title="Informations Professionnelles"
-                icon="fa-briefcase"/>
+                [...posteSelect.options].forEach(function (option) {
+                    if (!option.value) return; // garde l'option vide visible
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    const departementPoste = String(posteDepartementMap[option.value] ?? '');
+                    option.hidden = departementId !== '' && departementPoste !== departementId;
+                });
 
-                <x-field
-                    name="departement"
-                    label="Département"
-                    placeholder="Ex: Informatique"/>
-
-                <x-field
-                    name="poste_occupe"
-                    label="Poste occupé"
-                    placeholder="Ex: Développeur Senior"/>
-
-                
-                <x-field
-                    type="date"
-                    name="date_embauche"
-                    label="Date d'embauche"/>
-
-                <x-field
-                    type="date"
-                    name="date_prisePoste"
-                    label="Date de prise de poste"/>
-
-                <x-field
-                    type="number"
-                    name="jours_conges"
-                    label="Jours de congés acquis"/>
-
-            </div>
-
-        </x-card>
-
-        {{-- =========================
-            3. Informations contractuelles
-        ========================= --}}
-        <x-card>
-
-            <x-section-title
-                number="3"
-                title="Informations Contractuelles"
-                icon="fa-file-contract"/>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                <x-field
-                    name="numero_contrat"
-                    label="Numéro du contrat"
-                    placeholder="CTR-2025-001"/>
-
-                <x-select
-                    name="type_contrat"
-                    label="Type de contrat"
-                    :options="['CDI','CDD','Stage','Freelance','Consultant','Intérim']"/>
-
-                <x-field
-                    type="date"
-                    name="date_debut"
-                    label="Date de début"/>
-
-                <x-field
-                    type="date"
-                    name="date_fin"
-                    label="Date de fin"/>
-
-                <x-field
-                    name="recruteur"
-                    label="Nom du recruteur"/>
-
-                <x-field
-                    type="number"
-                    name="salaire"
-                    label="Salaire"/>
-
-            </div>
-
-        </x-card>
-
-        <div class="flex justify-end mt-6">
-
-            <button
-                type="submit"
-                class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#E2721B] hover:bg-[#D16212] text-white font-medium">
-                <i class="fa-solid fa-check"></i>
-                Valider
-            </button>
-
-        </div>
-
-    </form>
-
-</div>
-
-@endsection
+                const selected = posteSelect.options[posteSelect.selectedIndex];
+                if (departementId !== '' && selected && selected.hidden) {
+                    posteSelect.value = '';
+                }
+            });
+        }
+    });
+</script>

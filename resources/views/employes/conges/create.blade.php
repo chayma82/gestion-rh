@@ -17,6 +17,18 @@
 
     </div>
 
+    {{-- Affichage des erreurs de validation, notamment le message
+         de solde insuffisant renvoyé par le contrôleur --}}
+    @if ($errors->any())
+        <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-4 text-sm">
+            <ul class="list-disc list-inside">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form action="{{ route('employes.conges.store') }}"
           method="POST"
           enctype="multipart/form-data">

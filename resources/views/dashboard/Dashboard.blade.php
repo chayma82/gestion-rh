@@ -8,8 +8,10 @@
         Tableau de bord exécutif
     </h1>
 
-    {{-- Cartes statistiques --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+    {{-- ============================================================ --}}
+    {{-- Cartes statistiques RH --}}
+    {{-- ============================================================ --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
 
         <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5">
             <div class="flex items-start justify-between mb-4">
@@ -18,10 +20,7 @@
                     <i class="fa-solid fa-users text-sm"></i>
                 </div>
             </div>
-            <p class="text-3xl font-bold text-gray-900 mb-3">{{ $totalEmployes ?? '1 284' }}</p>
-            <div class="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                <div class="h-full bg-[#9A2A00] rounded-full" style="width: 78%"></div>
-            </div>
+            <p class="text-3xl font-bold text-gray-900">{{ number_format($totalEmployes, 0, ',', ' ') }}</p>
         </div>
 
         <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5">
@@ -31,43 +30,99 @@
                     <i class="fa-solid fa-file-contract text-sm"></i>
                 </div>
             </div>
-            <p class="text-3xl font-bold text-gray-900 mb-1">{{ $contratsActifs ?? '942' }}</p>
-            <p class="text-xs text-gray-400 mb-2">Actifs ce mois</p>
-            <div class="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                <div class="h-full bg-[#E2721B] rounded-full" style="width: 62%"></div>
-            </div>
+            <p class="text-3xl font-bold text-gray-900 mb-1">{{ number_format($contratsActifs, 0, ',', ' ') }}</p>
+            <p class="text-xs text-gray-400">Actifs ce mois</p>
         </div>
 
         <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5">
             <div class="flex items-start justify-between mb-4">
-                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Congés en Attente</h4>
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Congés en cours</h4>
                 <div class="w-9 h-9 rounded-lg bg-red-100 text-red-500 flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-calendar-xmark text-sm"></i>
                 </div>
             </div>
-            <p class="text-3xl font-bold text-gray-900 mb-1">{{ $congesEnAttente ?? '18' }}</p>
-            <p class="text-xs text-red-500 font-medium mb-2">Action requise</p>
-            <div class="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                <div class="h-full bg-red-400 rounded-full" style="width: 20%"></div>
-            </div>
+            <p class="text-3xl font-bold text-gray-900 mb-1">{{ number_format($congesAujourdhui, 0, ',', ' ') }}</p>
+            <p class="text-xs text-gray-400">Employé(s) aujourd'hui</p>
         </div>
 
         <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5">
             <div class="flex items-start justify-between mb-4">
-                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Facturation Totale (MTD)</h4>
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Masse Salariale (mois)</h4>
                 <div class="w-9 h-9 rounded-lg bg-[#9A2A00] text-white flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-file-invoice text-sm"></i>
                 </div>
             </div>
-            <p class="text-3xl font-bold text-gray-900 mb-3">{{ $facturationTotale ?? '4.2M€' }}</p>
-            <div class="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                <div class="h-full bg-[#9A2A00] rounded-full" style="width: 85%"></div>
-            </div>
+            <p class="text-3xl font-bold text-gray-900">{{ number_format($masseSalarialeMois, 2) }} DT</p>
         </div>
 
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {{-- ============================================================ --}}
+    {{-- Cartes statistiques FACTURES (achats & ventes) --}}
+    {{-- ============================================================ --}}
+    <div class="flex items-center justify-between mb-3 mt-2">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Facturation</h2>
+        <div class="flex items-center gap-3 text-xs">
+            <a href="{{ route('factures.ventes.index') }}" class="text-[#E2721B] hover:underline font-medium">
+                Factures ventes <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </a>
+            <a href="{{ route('factures.achats.index') }}" class="text-[#E2721B] hover:underline font-medium">
+                Factures achats <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+
+        <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5">
+            <div class="flex items-start justify-between mb-4">
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Chiffre d'affaires (mois)</h4>
+                <div class="w-9 h-9 rounded-lg bg-green-100 text-green-600 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-arrow-trend-up text-sm"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900 mb-1">{{ number_format($caVentesMois, 2) }} DT</p>
+            <p class="text-xs text-gray-400">Ventes émises ce mois-ci</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5">
+            <div class="flex items-start justify-between mb-4">
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Achats (mois)</h4>
+                <div class="w-9 h-9 rounded-lg bg-orange-100 text-[#E2721B] flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-arrow-trend-down text-sm"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-gray-900 mb-1">{{ number_format($achatsMois, 2) }} DT</p>
+            <p class="text-xs text-gray-400">Factures fournisseurs ce mois-ci</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5">
+            <div class="flex items-start justify-between mb-4">
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">À recevoir / À payer</h4>
+                <div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-scale-balanced text-sm"></i>
+                </div>
+            </div>
+            <p class="text-lg font-bold text-green-600">+{{ number_format($montantARecevoir, 2) }} DT</p>
+            <p class="text-lg font-bold text-red-500">-{{ number_format($montantAPayer, 2) }} DT</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5">
+            <div class="flex items-start justify-between mb-4">
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Factures en retard</h4>
+                <div class="w-9 h-9 rounded-lg bg-red-100 text-red-500 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+                </div>
+            </div>
+            <p class="text-3xl font-bold {{ $facturesEnRetardTotal > 0 ? 'text-red-500' : 'text-gray-900' }} mb-1">
+                {{ number_format($facturesEnRetardTotal, 0, ',', ' ') }}
+            </p>
+            <p class="text-xs text-gray-400">Achats + ventes confondus</p>
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
         {{-- Graphique de croissance --}}
         <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-6">
@@ -76,36 +131,15 @@
                 <h3 class="text-lg font-semibold text-gray-900">
                     Croissance des employés
                 </h3>
-
-                <div class="relative">
-                    <select class="appearance-none border border-gray-300 rounded-lg pl-4 pr-9 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                        <option>Derniers 12 mois</option>
-                        <option>Derniers 6 mois</option>
-                        <option>Cette année</option>
-                    </select>
-                    <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
-                </div>
             </div>
 
             @php
-                $mois = $croissance ?? [
-                    ['label' => 'Jan', 'valeur' => 980],
-                    ['label' => 'Fév', 'valeur' => 1005],
-                    ['label' => 'Mar', 'valeur' => 995],
-                    ['label' => 'Avr', 'valeur' => 1040],
-                    ['label' => 'Mai', 'valeur' => 1060],
-                    ['label' => 'Juin', 'valeur' => 1110],
-                    ['label' => 'Juil', 'valeur' => 1140],
-                    ['label' => 'Août', 'valeur' => 1180],
-                    ['label' => 'Sep', 'valeur' => 1220],
-                    ['label' => 'Oct', 'valeur' => 1284],
-                ];
-                $max = collect($mois)->max('valeur');
+                $max = collect($croissance)->max('valeur') ?: 1;
             @endphp
 
             <div class="flex items-end justify-between gap-3 h-64">
 
-                @foreach($mois as $i => $m)
+                @forelse($croissance as $m)
                     <div class="flex-1 flex flex-col items-center justify-end h-full relative">
 
                         @if($loop->last)
@@ -116,13 +150,15 @@
 
                         <div class="w-full rounded-t-md transition-all
                             {{ $loop->last ? 'bg-[#9A2A00]' : 'bg-orange-200' }}"
-                            style="height: {{ ($m['valeur'] / $max) * 100 }}%">
+                            style="height: {{ $m['valeur'] > 0 ? ($m['valeur'] / $max) * 100 : 2 }}%">
                         </div>
 
                         <span class="text-xs text-gray-400 mt-2">{{ $m['label'] }}</span>
 
                     </div>
-                @endforeach
+                @empty
+                    <p class="text-sm text-gray-400 w-full text-center">Aucune donnée disponible.</p>
+                @endforelse
 
             </div>
 
@@ -137,16 +173,7 @@
 
             <div class="space-y-5">
 
-                @php
-                    $notifications = $notifications ?? [
-                        ['icon' => 'fa-sack-dollar', 'color' => 'bg-green-50 text-green-600', 'titre' => 'Paiement Reçu', 'texte' => "La facture #INV-2024-001 doit être réglée dans 6 jours", 'temps' => 'Il y a 2 heures'],
-                        ['icon' => 'fa-user-plus', 'color' => 'bg-orange-50 text-[#E2721B]', 'titre' => 'Nouvel Employé', 'texte' => "Jean Dupont a rejoint l'équipe Marketing.", 'temps' => 'Il y a 5 heures'],
-                        ['icon' => 'fa-circle-exclamation', 'color' => 'bg-red-50 text-red-500', 'titre' => 'Retard de Paiement', 'texte' => "La facture #INV-2023-098 est en retard de 5 jours.", 'temps' => 'Hier'],
-                        ['icon' => 'fa-file-signature', 'color' => 'bg-blue-50 text-blue-600', 'titre' => 'Document Signé', 'texte' => "Le contrat de Marie Curie a été validé.", 'temps' => 'Il y a 2 jours'],
-                    ];
-                @endphp
-
-                @foreach($notifications as $n)
+                @forelse($notifications as $n)
                     <div class="flex items-start gap-3">
 
                         <div class="w-9 h-9 rounded-full {{ $n['color'] }} flex items-center justify-center shrink-0">
@@ -160,12 +187,82 @@
                         </div>
 
                     </div>
-                @endforeach
+                @empty
+                    <p class="text-sm text-gray-400">Aucune notification pour le moment.</p>
+                @endforelse
 
             </div>
 
         </div>
 
+    </div>
+
+    {{-- ============================================================ --}}
+    {{-- Prochaines échéances (achats + ventes) --}}
+    {{-- ============================================================ --}}
+    <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">Prochaines échéances</h3>
+            <span class="text-xs text-gray-400">Factures non payées, triées par urgence</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[700px]">
+                <thead class="bg-orange-50">
+                    <tr>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Type</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">N° Facture</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tiers</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Échéance</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Montant</th>
+                        <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($prochainesEcheances as $e)
+                        <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="window.location='{{ $e['lien'] }}'">
+                            <td class="px-6 py-3">
+                                @if($e['type'] === 'vente')
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium">
+                                        <i class="fa-solid fa-arrow-trend-up"></i> Vente
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 text-[#E2721B] text-xs font-medium">
+                                        <i class="fa-solid fa-arrow-trend-down"></i> Achat
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-3 text-sm font-semibold text-gray-900">{{ $e['numero'] }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-600">{{ $e['tiers'] }}</td>
+                            <td class="px-6 py-3 text-sm text-gray-600">{{ $e['echeance']->format('d/m/Y') }}</td>
+                            <td class="px-6 py-3 text-sm font-semibold text-gray-900">{{ number_format($e['montant'], 2) }} DT</td>
+                            <td class="px-6 py-3">
+                                @if($e['statut'] === 'en_retard')
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-600 text-xs font-medium">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> En retard
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">
+                                        <i class="fa-solid fa-clock"></i> En attente
+                                    </span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center gap-3 text-gray-400">
+                                    <div class="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center">
+                                        <i class="fa-solid fa-circle-check text-xl text-green-400"></i>
+                                    </div>
+                                    <p class="text-sm font-medium">Aucune échéance en attente — tout est à jour !</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </div>
