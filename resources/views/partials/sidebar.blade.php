@@ -189,6 +189,15 @@
     $fournisseursActif = request()->routeIs('fournisseurs.*');
 
     $facturesAchatsActif = request()->routeIs('factures.achats.*');
+
+    // ===== PARAMÈTRES (Utilisateurs & Rôles) =====
+    // Les routes réelles sont 'utilisateur.index' / 'utilisateurs.*' et 'roles.*'
+    // (pas de préfixe "parametres."), on aligne donc les conditions ci-dessous.
+    $utilisateursActif = request()->routeIs('utilisateur.index') || request()->routeIs('utilisateurs.*');
+
+    $rolesActif = request()->routeIs('roles.*');
+
+    $parametresActif = $utilisateursActif || $rolesActif;
     @endphp
 
     <!-- ================= VENTES ================= -->
@@ -283,6 +292,55 @@
                     'text-gray-600 hover:text-[#E2721B]' => !$facturesAchatsActif,
                 ])>
                 Factures fournisseurs
+            </a>
+        </li>
+
+    </ul>
+
+</li>
+
+<!-- ================= PARAMÈTRES ================= -->
+
+<li>
+
+    <div @class([
+        'w-full flex items-center justify-between px-4 py-3 rounded-lg',
+        'bg-orange-50 text-[#E2721B]' => $parametresActif,
+        'text-gray-600' => !$parametresActif,
+    ])>
+
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-gear"></i>
+            <span class="text-sm font-medium">Paramètres</span>
+        </div>
+
+        <i class="fa-solid fa-chevron-down text-xs"></i>
+
+    </div>
+
+    <ul class="ml-10 mt-2 space-y-2">
+
+        <!-- Utilisateurs -->
+        <li>
+            <a href="{{ route('utilisateur.index') }}"
+                @class([
+                    'block text-sm',
+                    'text-[#E2721B] font-semibold' => $utilisateursActif,
+                    'text-gray-600 hover:text-[#E2721B]' => !$utilisateursActif,
+                ])>
+                Utilisateurs
+            </a>
+        </li>
+
+        <!-- Rôles -->
+        <li>
+            <a href="{{ route('roles.index') }}"
+                @class([
+                    'block text-sm',
+                    'text-[#E2721B] font-semibold' => $rolesActif,
+                    'text-gray-600 hover:text-[#E2721B]' => !$rolesActif,
+                ])>
+                Rôles
             </a>
         </li>
 

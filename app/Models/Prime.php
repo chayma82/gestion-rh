@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Prime extends Model
 {
@@ -11,7 +11,8 @@ class Prime extends Model
 
     protected $table = 'primes';
 
-    public $timestamps = false;
+    const CREATED_AT = 'date_creation';
+    const UPDATED_AT = null;
 
     protected $fillable = [
         'tenant_id',
@@ -23,7 +24,7 @@ class Prime extends Model
     ];
 
     protected $casts = [
-        'montant' => 'decimal:2',
+        'montant'     => 'decimal:2',
         'date_prime' => 'date',
         'date_creation' => 'datetime',
     ];

@@ -47,10 +47,13 @@
             :value="old('situation_familiale', $employe->situation_familiale ?? '')"
         />
 
-        <x-field type="number" name="nb_enfants" label="Nombre d'enfants"
+        <x-field
+            type="number"
+            name="nb_enfants"
+            label="Nombre d'enfants"
             placeholder="0"
-            :value="old('nb_enfants', $employe->nb_enfants ?? '')"/>
-
+            :value="old('nb_enfants', $employe->nb_enfants ?? 0)"
+        />
     </div>
 </x-card>
 

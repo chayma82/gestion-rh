@@ -11,7 +11,6 @@ class Departement extends Model
 
     protected $table = 'departement';
 
-    // Pas de date_creation/date_modification dans cette table
     public $timestamps = false;
 
     protected $fillable = [
@@ -30,8 +29,8 @@ class Departement extends Model
         return $this->hasMany(Poste::class, 'departement_id');
     }
 
-    public function employes()
+    public function contrats()
     {
-        return $this->hasMany(Employe::class, 'departement_id');
+        return $this->hasMany(Contrat::class, 'departement_id');
     }
 }

@@ -19,7 +19,10 @@ class FactureVente extends Model
         'montant_ttc', 'montant_paye', 'montant_restant', 'statut','statut_avant_archivage',
         'chemin_pdf', 'nom_pdf',
     ];
-
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
     public function client()
     {
         return $this->belongsTo(Client::class, 'client_id');

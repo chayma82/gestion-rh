@@ -17,6 +17,9 @@ use App\Http\Controllers\FactureAchatController;
 use App\Http\Controllers\PrimeController;
 use App\Http\Controllers\PrimeperController;
 use App\Http\Controllers\SalaireController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UtilisateurController;
+
 
 //employes
 
@@ -133,10 +136,14 @@ Route::post('/logout', [AuthController::class, 'logout'])
 Route::get('/auth', [AuthController::class, 'authi'])
     ->name('auth.authi');
 
-Route::get('/auth/create', [AuthController::class, 'create'])
-    ->name('auth.create');
+
 Route::get('/auth/success', [AuthController::class, 'success'])
     ->name('auth.success');
+Route::get('/auth/create', [AuthController::class, 'create'])
+    ->name('auth.create');
+
+Route::post('/auth/create', [AuthController::class, 'store'])
+    ->name('auth.store');
 
 
 
@@ -255,3 +262,49 @@ Route::get('factures/ventes/quittance/{paiement}/telecharger', [FactureVenteCont
     ->name('factures.ventes.quittance.pdf');
 Route::get('/factures/ventes/{facture}/pdf', [FactureVenteController::class, 'facturePdf'])
     ->name('factures.ventes.facture.pdf');
+
+
+
+// ================= UTILISATEURS =================
+
+Route::get('/utilisateurs', [UtilisateurController::class, 'index'])
+    ->name('utilisateur.index');
+
+Route::get('/utilisateurs/creer', [UtilisateurController::class, 'create'])
+    ->name('utilisateurs.create');
+
+Route::post('/utilisateurs', [UtilisateurController::class, 'store'])
+    ->name('utilisateurs.store');
+
+Route::get('/utilisateurs/{id}/modifier', [UtilisateurController::class, 'edit'])
+    ->name('utilisateurs.edit');
+
+Route::put('/utilisateurs/{id}', [UtilisateurController::class, 'update'])
+    ->name('utilisateurs.update');
+
+Route::patch('/utilisateurs/{id}/toggle-actif', [UtilisateurController::class, 'toggleActif'])
+    ->name('utilisateurs.toggle-actif');
+
+Route::delete('/utilisateurs/{id}', [UtilisateurController::class, 'destroy'])
+    ->name('utilisateurs.destroy');
+
+
+// ================= RÔLES =================
+
+Route::get('/roles', [RoleController::class, 'index'])
+    ->name('roles.index');
+
+Route::get('/roles/creer', [RoleController::class, 'create'])
+    ->name('roles.create');
+
+Route::post('/roles', [RoleController::class, 'store'])
+    ->name('roles.store');
+
+Route::get('/roles/{id}/modifier', [RoleController::class, 'edit'])
+    ->name('roles.edit');
+
+Route::put('/roles/{id}', [RoleController::class, 'update'])
+    ->name('roles.update');
+
+Route::delete('/roles/{id}', [RoleController::class, 'destroy'])
+    ->name('roles.destroy');

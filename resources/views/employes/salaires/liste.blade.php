@@ -16,7 +16,7 @@
                 Gérer la paie et suivre les versements des employés.
                 <span class="inline-flex items-center gap-1 text-xs text-gray-400">
                     · Jour de paie configuré :
-                    <strong class="text-gray-600">parametrePaie->jour_paiement ?? 3 </strong>
+                    <strong class="text-gray-600">{{ $parametrePaie->jour_paiement ?? 3 }}</strong>
                     <button type="button" onclick="toggleConfigPaie()" class="text-orange-600 hover:underline">
                         (modifier)
                     </button>
@@ -50,7 +50,7 @@
 
     <!-- Panneau de configuration du jour de paie (masqué par défaut) -->
     <div id="configPaie" class="hidden mb-6 bg-orange-50 border border-orange-200 rounded-xl p-4">
-        <form action="#" method="POST" class="flex items-end gap-3">
+        <form action="{{ route('employes.salaires.config') }}" method="POST" class="flex items-end gap-3">
             @csrf
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Jour du mois pour générer les salaires</label>
@@ -87,6 +87,19 @@
                 value="{{ request('q') }}"
                 placeholder="Rechercher par employé..."
                 class="w-full border border-gray-300 rounded-lg pl-11 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
+        </div>
+
+        {{-- Filtre par statut du salaire (en_attente / paye), même
+             vocabulaire que le badge déjà affiché dans le tableau --}}
+        <div class="relative">
+            <select name="statut"
+                class="appearance-none bg-white border border-gray-300 hover:bg-gray-50 rounded-lg pl-4 pr-10 py-3 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition">
+                <option value="">Tous les statuts</option>
+                @foreach(\App\Models\Salaire::statuts() as $valeur => $libelle)
+                    <option value="{{ $valeur }}" @selected(request('statut') == $valeur)>{{ $libelle }}</option>
+                @endforeach
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
         </div>
 
         <div class="relative">
@@ -168,19 +181,19 @@
                         </td>
 
                         <td class="px-6 py-4">
-                            @if($salaire->statut === 'paye')
-                                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-medium">
-                                    <i class="fa-solid fa-check"></i> Payé
-                                </span>
-                                @if($salaire->date_paiement)
-                                    <div class="text-[11px] text-gray-400 mt-1">
-                                        le {{ $salaire->date_paiement->format('d/m/Y') }}
-                                    </div>
+                            {{-- Badge cohérent avec les autres modules (Contrat, Employe, Congé) --}}
+                            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium {{ $salaire->statut_badge['classes'] }}">
+                                @if($salaire->statut === 'paye')
+                                    <i class="fa-solid fa-check"></i>
+                                @else
+                                    <i class="fa-solid fa-clock"></i>
                                 @endif
-                            @else
-                                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-xs font-medium">
-                                    <i class="fa-solid fa-clock"></i> En attente
-                                </span>
+                                {{ $salaire->statut_badge['label'] }}
+                            </span>
+                            @if($salaire->statut === 'paye' && $salaire->date_paiement)
+                                <div class="text-[11px] text-gray-400 mt-1">
+                                    le {{ $salaire->date_paiement->format('d/m/Y') }}
+                                </div>
                             @endif
                         </td>
 

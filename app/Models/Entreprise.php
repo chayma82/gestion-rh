@@ -40,8 +40,13 @@ class Entreprise extends Model
         return $this->hasMany(Employe::class, 'entreprise_id');
     }
 
-    public function factures()
+    public function factureschat()
     {
-        return $this->hasMany(Facture::class, 'entreprise_id');
+        return $this->hasMany(FactureAchat::class, 'entreprise_id');
     }
+    public function facturesvente()
+    {
+        return $this->hasMany(FactureVente::class, 'entreprise_id');
+    }
+
 }

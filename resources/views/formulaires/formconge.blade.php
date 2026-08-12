@@ -2,13 +2,14 @@
 
     <div class="grid grid-cols-1 gap-6">
 
-        <x-select
-            id="employe_id"
-            name="employe_id"
-            label="Employé"
-            :options="$employes->pluck('matricule_nom_complet', 'id')->toArray()"
-            required="true"
-        />
+         <x-select
+        id="employe_id"
+        name="employe_id"
+        label="Employé"
+        :options="$employes->pluck('matricule_nom_complet', 'id')->toArray()"
+        required="true"
+    />
+
          <div id="soldeConge" class="hidden text-sm text-gray-600">
             Solde disponible :
             <span id="nombreJours" class="font-semibold"></span>

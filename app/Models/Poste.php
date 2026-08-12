@@ -11,7 +11,6 @@ class Poste extends Model
 
     protected $table = 'poste';
 
-    // Pas de date_creation/date_modification dans cette table
     public $timestamps = false;
 
     protected $fillable = [
@@ -31,8 +30,8 @@ class Poste extends Model
         return $this->belongsTo(Departement::class, 'departement_id');
     }
 
-    public function employes()
+    public function contrats()
     {
-        return $this->hasMany(Employe::class, 'poste_id');
+        return $this->hasMany(Contrat::class, 'poste_id');
     }
 }

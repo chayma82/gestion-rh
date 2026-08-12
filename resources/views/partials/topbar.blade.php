@@ -35,6 +35,11 @@
             request()->routeIs('achats.fournisseurs.*')    => 'Fournisseurs',
             request()->routeIs('factures.achats.*')        => 'Factures fournisseurs',
 
+            // Paramètres (Utilisateurs & Rôles)
+            request()->routeIs('utilisateur.*')            => 'Utilisateurs',
+            request()->routeIs('utilisateurs.*')            => 'Utilisateurs',
+            request()->routeIs('roles.*')                    => 'Rôles',
+
             default                                        => 'Portail RH',
         };
     @endphp

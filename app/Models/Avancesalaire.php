@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class AvanceSalaire extends Model
 {
@@ -24,9 +24,9 @@ class AvanceSalaire extends Model
     ];
 
     protected $casts = [
-        'montant' => 'decimal:2',
-        'date_avance' => 'date',
-        'date_creation' => 'datetime',
+        'montant'           => 'decimal:2',
+        'date_avance'       => 'date',
+        'date_creation'     => 'datetime',
         'date_modification' => 'datetime',
     ];
 

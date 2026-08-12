@@ -48,12 +48,13 @@
         </label>
 
         <input type="date"
-    name="date_avance"
-    value="{{ old('date_avance', now()->format('Y-m-d')) }}"
-    required
-    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm
-    focus:outline-none focus:ring-2 focus:ring-orange-500
-    focus:border-orange-500 transition">
+            name="date_avance"
+            value="{{ old('date_avance', now()->format('Y-m-d')) }}"
+            required
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm
+            focus:outline-none focus:ring-2 focus:ring-orange-500
+            focus:border-orange-500 transition">
+    </div>
 
 
     <div class="md:col-span-2">

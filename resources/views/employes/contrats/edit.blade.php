@@ -11,7 +11,11 @@
             Modifier le contrat
         </h1>
 
-        <x-annuler />
+        <a href="{{ route('employes.contrats.index') }}"
+           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium transition">
+            <i class="fa-solid fa-arrow-left"></i>
+            Retour
+        </a>
     </div>
 
     <!-- Formulaire -->

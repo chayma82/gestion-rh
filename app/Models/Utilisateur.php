@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 
 class Utilisateur extends Authenticatable
 {
@@ -45,6 +46,24 @@ class Utilisateur extends Authenticatable
     public function getAuthPassword()
     {
         return $this->motdepasse;
+    }
+
+    /**
+     * Hash automatiquement le mot de passe à chaque affectation
+     * (Utilisateur::create([...]) ou $utilisateur->motdepasse = '...').
+     * Évite un double hash si la valeur est déjà un hash bcrypt/argon.
+     */
+    public function setMotdepasseAttribute(?string $value): void
+    {
+        if (empty($value)) {
+            return;
+        }
+
+        // Si la valeur est déjà un hash bcrypt/argon (ex: ressemencement, import),
+        // on ne la re-hash pas. Sinon on hash le mot de passe en clair.
+        $dejaHash = str_starts_with($value, '$2y$') || str_starts_with($value, '$argon2');
+
+        $this->attributes['motdepasse'] = $dejaHash ? $value : Hash::make($value);
     }
 
     public function tenant()
