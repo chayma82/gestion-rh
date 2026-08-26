@@ -9,12 +9,12 @@ Schedule::command('employes:synchroniser-statuts')
 
 
 
-Schedule::command('contrats:actualiser')->dailyAt('00:05')
+Schedule::command('contrats:actualiser')->everyMinute()
     ->withoutOverlapping();
 Schedule::command('contrats:expirer')->everyMinute()
     ->withoutOverlapping();
 
-Schedule::command('salaires:generer-mensuel')->everyMinute()
+Schedule::command('salaires:generer-mensuel')->everyThreeHours()
     ->withoutOverlapping();
 Schedule::command('factures:maj-statuts')->everyMinute()
     ->withoutOverlapping();

@@ -16,7 +16,7 @@ class EmployeController extends Controller
         
 
         $query = Employe::query()
-            ->where('tenant_id', 1)
+            ->where('tenant_id', current_tenant_id())
             ->where('statutEmploye', '!=', 'archive')
             ->with([
                 'contrats' => function ($query) {
@@ -97,17 +97,17 @@ class EmployeController extends Controller
         */
 
         // Tous les employés non archivés
-        $totalemploye = Employe::where('tenant_id', 1)
+        $totalemploye = Employe::where('tenant_id', current_tenant_id())
             ->where('statutEmploye', '!=', 'archive')
             ->count();
 
         // Employés actifs
-        $employesActifs = Employe::where('tenant_id', 1)
+        $employesActifs = Employe::where('tenant_id', current_tenant_id())
             ->where('statutEmploye', 'actif')
             ->count();
 
         // Employés actuellement en congé
-        $employesConge = Employe::where('tenant_id', 1)
+        $employesConge = Employe::where('tenant_id', current_tenant_id())
             ->where('statutEmploye', 'en_conge')
             ->count();
 
@@ -155,7 +155,7 @@ class EmployeController extends Controller
                 'max:50',
 
                 Rule::unique('employe')->where(
-                    fn ($query) => $query->where('tenant_id', 1)
+                    fn ($query) => $query->where('tenant_id', current_tenant_id())
                 ),
             ],
 
@@ -229,11 +229,11 @@ class EmployeController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $validated['tenant_id'] = 1;
+        $validated['tenant_id'] = current_tenant_id();
 
-        $validated['entreprise_id'] = 1;
+        $validated['entreprise_id'] = current_entreprise_id();
 
-        $validated['utilisateur_creation_id'] = 1;
+        $validated['utilisateur_creation_id'] = current_utilisateur_id();
 
         /*
         |--------------------------------------------------------------------------
@@ -404,7 +404,7 @@ class EmployeController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $employes = Employe::where('tenant_id', 1)
+        $employes = Employe::where('tenant_id', current_tenant_id())
             ->where(
                 'statutEmploye',
                 'archive'

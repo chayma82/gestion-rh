@@ -2,41 +2,92 @@
 
 use App\Models\Utilisateur;
 
+/*
+|--------------------------------------------------------------------------
+| Helpers multi-tenant
+|--------------------------------------------------------------------------
+|
+| Remplace tous les "1" en dur utilisés comme tenant_id / entreprise_id /
+| utilisateur_id dans les contrôleurs par la vraie valeur de l'utilisateur
+| connecté (basée sur la session posée par AuthController::login()).
+|
+| Si current_utilisateur() existe déjà ailleurs dans le projet (c'est le
+| cas d'après AuthController / AuthenticateUtilisateur), NE PAS dupliquer
+| cette fonction : gardez uniquement current_tenant_id(), current_entreprise_id()
+| et current_utilisateur_id() ci-dessous, et supprimez le bloc du dessus.
+|
+*/
+
 if (!function_exists('current_utilisateur')) {
     /**
-     * Retourne l'utilisateur actuellement connecté (ou null si personne n'est connecté).
-     * Mis en cache pour la durée de la requête pour éviter des requêtes SQL répétées.
+     * Utilisateur actuellement connecté, résolu depuis la session.
+     * Mis en cache pour la durée de la requête (évite une requête SQL
+     * à chaque appel).
      */
     function current_utilisateur(): ?Utilisateur
     {
-        static $utilisateur = null;
+        static $cache = null;
         static $resolved = false;
 
         if ($resolved) {
-            return $utilisateur;
+            return $cache;
         }
 
-        $resolved = true;
         $id = session('utilisateur_id');
+        $cache = $id ? Utilisateur::find($id) : null;
+        $resolved = true;
 
-        if (!$id) {
-            return null;
-        }
-
-        $utilisateur = Utilisateur::with(['role', 'tenant.tenantCategorie'])->find($id);
-
-        return $utilisateur;
+        return $cache;
     }
 }
 
 if (!function_exists('current_tenant_id')) {
     /**
-     * Retourne le tenant_id de l'utilisateur connecté.
-     * Valeur de secours à 1 tant que toutes les pages ne sont pas protégées par le login
-     * (permet une migration progressive sans tout casser d'un coup).
+     * tenant_id de l'utilisateur connecté.
+     * Coupe la requête avec un 401 si appelée hors d'une route protégée
+     * par le middleware AuthenticateUtilisateur (garde-fou de sécurité :
+     * mieux vaut planter que de renvoyer les données d'un autre tenant).
      */
     function current_tenant_id(): int
     {
-        return current_utilisateur()?->tenant_id ?? (int) session('tenant_id', 1);
+        $utilisateur = current_utilisateur();
+
+        abort_if(!$utilisateur, 401, 'Utilisateur non authentifié.');
+
+        return $utilisateur->tenant_id;
+    }
+}
+
+if (!function_exists('current_entreprise_id')) {
+    function current_entreprise_id(): int
+    {
+        $utilisateur = current_utilisateur();
+
+        abort_if(!$utilisateur, 401, 'Utilisateur non authentifié.');
+
+        return $utilisateur->entreprise_id;
+    }
+}
+
+if (!function_exists('current_utilisateur_id')) {
+    function current_utilisateur_id(): ?int
+    {
+        return current_utilisateur()?->id;
+    }
+}
+
+if (!function_exists('is_super_admin')) {
+    /**
+     * Un "super admin" est un utilisateur dont le rôle s'appelle "SuperAdmin".
+     * Utilisé pour la gestion des tenants (validation des inscriptions),
+     * qui doit rester en dehors du périmètre d'un tenant classique.
+     * Adaptez cette fonction si vous préférez un mécanisme différent
+     * (ex : colonne dédiée utilisateur.est_super_admin).
+     */
+    function is_super_admin(): bool
+    {
+        $utilisateur = current_utilisateur();
+
+        return $utilisateur && $utilisateur->role?->nom === 'SuperAdmin';
     }
 }

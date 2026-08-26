@@ -25,7 +25,17 @@
             </p>
         </div>
 
-        <form action="" method="POST">
+        @if ($errors->any())
+            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('auth.store') }}" method="POST">
             @csrf
 
             {{-- Informations de l'entreprise --}}
@@ -40,27 +50,26 @@
 
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-700">
-                            Nom de l'organisation <span class="text-red-500">*</span>
+                            Nom de l'entreprise <span class="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
-                            name="nom_organisation"
+                            name="nom_entreprise"
+                            value="{{ old('nom_entreprise') }}"
                             placeholder="Ex: Tech Holding"
                             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
                     </div>
 
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-700">
-                            Matricule Fiscale <span class="text-red-500">*</span>
+                            Matricule fiscale <span class="text-red-500">*</span>
                         </label>
-                        <div class="relative">
-                            <select
-                                name="matricule_fiscale"
-                                class="w-full appearance-none rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 bg-white text-sm">
-                                <option value="12345678A">12345678A</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
-                        </div>
+                        <input
+                            type="text"
+                            name="num_fiscal"
+                            value="{{ old('num_fiscal') }}"
+                            placeholder="12345678A"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
                     </div>
 
                     <div>
@@ -72,12 +81,12 @@
                                 name="secteur_activite"
                                 class="w-full appearance-none rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-500 bg-white text-sm">
                                 <option value="">Sélectionner...</option>
-                                <option value="tech">Technologie</option>
-                                <option value="finance">Finance</option>
-                                <option value="sante">Santé</option>
-                                <option value="industrie">Industrie</option>
-                                <option value="commerce">Commerce</option>
-                                <option value="autre">Autre</option>
+                                <option value="tech" @selected(old('secteur_activite') == 'tech')>Technologie</option>
+                                <option value="finance" @selected(old('secteur_activite') == 'finance')>Finance</option>
+                                <option value="sante" @selected(old('secteur_activite') == 'sante')>Santé</option>
+                                <option value="industrie" @selected(old('secteur_activite') == 'industrie')>Industrie</option>
+                                <option value="commerce" @selected(old('secteur_activite') == 'commerce')>Commerce</option>
+                                <option value="autre" @selected(old('secteur_activite') == 'autre')>Autre</option>
                             </select>
                             <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
                         </div>
@@ -90,7 +99,8 @@
                         <input
                             type="email"
                             name="email_entreprise"
-                            placeholder="admin@entreprise.com"
+                            value="{{ old('email_entreprise') }}"
+                            placeholder="contact@entreprise.com"
                             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
                     </div>
 
@@ -98,48 +108,12 @@
 
             </div>
 
-            {{-- Configuration --}}
-            <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-8 mb-6">
-
-                <h2 class="flex items-center gap-2 text-base font-semibold text-gray-900 mb-6">
-                    <i class="fa-solid fa-gear text-[#E2721B] text-sm"></i>
-                    Configuration
-                </h2>
-
-                <div class="space-y-5">
-
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-700">
-                            Nom de l'administrateur
-                        </label>
-                        <input
-                            type="text"
-                            name="nom_administrateur"
-                            placeholder="Prénom Nom"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
-                    </div>
-
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-700">
-                            Email professionnel <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="email"
-                            name="email_professionnel"
-                            placeholder="admin@entreprise.com"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
-                    </div>
-
-                </div>
-
-            </div>
-
-            {{-- Coordonnées administratives --}}
+            {{-- Coordonnées administratives de l'entreprise --}}
             <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-8 mb-6">
 
                 <h2 class="flex items-center gap-2 text-base font-semibold text-gray-900 mb-6">
                     <i class="fa-solid fa-location-dot text-[#E2721B] text-sm"></i>
-                    Coordonnées Administratives
+                    Coordonnées de l'entreprise
                 </h2>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
@@ -150,19 +124,21 @@
                         </label>
                         <input
                             type="text"
-                            name="adresse_siege"
+                            name="adresse"
+                            value="{{ old('adresse') }}"
                             placeholder="123 Rue de la République"
                             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
                     </div>
 
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-700">
-                            Téléphone professionnel <span class="text-red-500">*</span>
+                            Téléphone de l'entreprise
                         </label>
                         <input
                             type="tel"
-                            name="telephone_professionnel"
-                            placeholder="+33 1 00 00 00 00"
+                            name="telephone_entreprise"
+                            value="{{ old('telephone_entreprise') }}"
+                            placeholder="+216 00 000 000"
                             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
                     </div>
 
@@ -173,7 +149,8 @@
                         <input
                             type="text"
                             name="ville"
-                            placeholder="Paris"
+                            value="{{ old('ville') }}"
+                            placeholder="Tunis"
                             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
                     </div>
 
@@ -184,7 +161,92 @@
                         <input
                             type="text"
                             name="code_postal"
-                            placeholder="75001"
+                            value="{{ old('code_postal') }}"
+                            placeholder="1000"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
+                    </div>
+
+                </div>
+
+            </div>
+
+            {{-- Compte administrateur --}}
+            <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-8 mb-6">
+
+                <h2 class="flex items-center gap-2 text-base font-semibold text-gray-900 mb-6">
+                    <i class="fa-solid fa-user-gear text-[#E2721B] text-sm"></i>
+                    Compte administrateur
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-700">
+                            Nom <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="nom"
+                            value="{{ old('nom') }}"
+                            placeholder="Nom"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-700">
+                            Prénom <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="prenom"
+                            value="{{ old('prenom') }}"
+                            placeholder="Prénom"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-700">
+                            Email professionnel <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="email"
+                            name="email_admin"
+                            value="{{ old('email_admin') }}"
+                            placeholder="admin@entreprise.com"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-700">
+                            Téléphone
+                        </label>
+                        <input
+                            type="tel"
+                            name="telephone_admin"
+                            value="{{ old('telephone_admin') }}"
+                            placeholder="+216 00 000 000"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-700">
+                            Mot de passe <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="password"
+                            name="motdepasse"
+                            placeholder="8 caractères minimum"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-700">
+                            Confirmer le mot de passe <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="password"
+                            name="motdepasse_confirmation"
+                            placeholder="Confirmer"
                             class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 placeholder-gray-400 bg-white text-sm">
                     </div>
 
@@ -200,11 +262,10 @@
                     Annuler
                 </a>
 
-                <a href="{{ route('auth.success') }}"
-                    type="submit"
+                <button type="submit"
                     class="px-6 py-2.5 rounded-lg bg-[#E2721B] hover:bg-[#D16212] text-white font-medium text-sm shadow-md shadow-orange-600/10 transition">
-                    Envoyer la demande
-                </a>
+                    Valider
+                </button>
 
             </div>
 

@@ -10,7 +10,7 @@ class FournisseurController extends Controller
     public function index(Request $request)
     {
         $fournisseurs = Fournisseur::actives()
-            ->where('entreprise_id', 1)
+            ->where('entreprise_id', current_entreprise_id())
             ->when($request->q, fn($q) => $q->where('nom', 'like', '%'.$request->q.'%'))
             ->paginate(15)
             ->withQueryString();
@@ -20,7 +20,7 @@ class FournisseurController extends Controller
 
     public function archiver(Fournisseur $fournisseur)
     {
-        abort_unless($fournisseur->entreprise_id === 1, 403);
+        abort_unless($fournisseur->entreprise_id === current_entreprise_id(), 403);
 
         $fournisseur->update(['status' => 'archive']);
 
@@ -30,7 +30,7 @@ class FournisseurController extends Controller
     public function archives(Request $request)
     {
         $fournisseurs = Fournisseur::archivees()
-            ->where('entreprise_id', 1)
+            ->where('entreprise_id', current_entreprise_id())
             ->when($request->q, fn($q) => $q->where('nom', 'like', '%'.$request->q.'%'))
             ->paginate(15)
             ->withQueryString();
@@ -40,7 +40,7 @@ class FournisseurController extends Controller
 
     public function desarchiver(Fournisseur $fournisseur)
     {
-        abort_unless($fournisseur->entreprise_id === 1, 403);
+        abort_unless($fournisseur->entreprise_id === current_entreprise_id(), 403);
 
         $fournisseur->update(['status' => 'actif']);
 
@@ -62,8 +62,8 @@ class FournisseurController extends Controller
             'matricule_fiscal' => 'required|nullable|string|max:50',
         ]);
 
-        $data['tenant_id']     = 1;
-        $data['entreprise_id'] = 1;
+        $data['tenant_id']     = current_tenant_id();
+        $data['entreprise_id'] = current_entreprise_id();
         $data['status']        = 'actif';
 
         Fournisseur::create($data);
@@ -73,14 +73,14 @@ class FournisseurController extends Controller
 
     public function edit(Fournisseur $fournisseur)
     {
-        abort_unless($fournisseur->entreprise_id === 1, 403);
+        abort_unless($fournisseur->entreprise_id === current_entreprise_id(), 403);
 
         return view('fournisseurs.edit', compact('fournisseur'));
     }
 
     public function update(Request $request, Fournisseur $fournisseur)
     {
-        abort_unless($fournisseur->entreprise_id === 1, 403);
+        abort_unless($fournisseur->entreprise_id === current_entreprise_id(), 403);
 
         $data = $request->validate([
             'nom'              => 'required|string|max:150',

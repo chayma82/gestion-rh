@@ -8,13 +8,9 @@ use App\Models\Role;
 
 class RoleController extends Controller
 {
-    // TODO: remplacer ce 1 en dur par le tenant de l'utilisateur connecté
-    // une fois l'authentification en place (ex: auth()->user()->tenant_id)
-    private const TENANT_ID = 1;
-
     public function index()
     {
-        $roles = Role::where('tenant_id', self::TENANT_ID)
+        $roles = Role::where('tenant_id', current_tenant_id())
             ->withCount('utilisateurs')
             ->orderBy('nom')
             ->get();
@@ -32,11 +28,11 @@ class RoleController extends Controller
         $validated = $request->validate([
             'nom' => [
                 'required', 'string', 'max:50',
-                Rule::unique('role')->where(fn ($q) => $q->where('tenant_id', self::TENANT_ID)),
+                Rule::unique('role')->where(fn ($q) => $q->where('tenant_id', current_tenant_id())),
             ],
         ]);
 
-        $validated['tenant_id'] = self::TENANT_ID;
+        $validated['tenant_id'] = current_tenant_id();
 
         Role::create($validated);
 
@@ -47,20 +43,20 @@ class RoleController extends Controller
 
     public function edit(int $id)
     {
-        $role = Role::where('tenant_id', self::TENANT_ID)->findOrFail($id);
+        $role = Role::where('tenant_id', current_tenant_id())->findOrFail($id);
 
         return view('roles.edit', compact('role'));
     }
 
     public function update(Request $request, int $id)
     {
-        $role = Role::where('tenant_id', self::TENANT_ID)->findOrFail($id);
+        $role = Role::where('tenant_id', current_tenant_id())->findOrFail($id);
 
         $validated = $request->validate([
             'nom' => [
                 'required', 'string', 'max:50',
                 Rule::unique('role')
-                    ->where(fn ($q) => $q->where('tenant_id', self::TENANT_ID))
+                    ->where(fn ($q) => $q->where('tenant_id', current_tenant_id()))
                     ->ignore($role->id),
             ],
         ]);
@@ -74,7 +70,7 @@ class RoleController extends Controller
 
     public function destroy(int $id)
     {
-        $role = Role::where('tenant_id', self::TENANT_ID)->findOrFail($id);
+        $role = Role::where('tenant_id', current_tenant_id())->findOrFail($id);
 
         if ($role->utilisateurs()->exists()) {
             return back()->withErrors([

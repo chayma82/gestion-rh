@@ -4,6 +4,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AvanceController;
 use App\Http\Controllers\AvanceperController;
 use App\Http\Controllers\CongeController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\CongeperController;
 use App\Http\Controllers\CongesController;
 use App\Http\Controllers\ContratController;
@@ -19,6 +21,10 @@ use App\Http\Controllers\PrimeperController;
 use App\Http\Controllers\SalaireController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UtilisateurController;
+use App\Http\Controllers\TenantController;
+use App\Http\Controllers\DepartementController;
+use App\Http\Controllers\PosteController;
+
 
 
 //employes
@@ -68,13 +74,12 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('Dashboard.index');
 
 //conges
-Route::get('/conges', [CongesController::class, 'index'])
-    ->name('employes.conges.index');
-Route::get('/employes/conges/create', [CongesController::class, 'create'])
-    ->name('employes.conges.create');
-
-Route::post('/employes/conges', [CongesController::class, 'store'])
-    ->name('employes.conges.store');
+Route::prefix('employes/conges')->name('employes.conges.')->group(function () {
+    Route::get('/', [CongesController::class, 'index'])->name('index');
+    Route::get('/create', [CongesController::class, 'create'])->name('create');
+    Route::post('/', [CongesController::class, 'store'])->name('store');
+    Route::get('/{conge}/justificatif', [CongesController::class, 'telechargerJustificatif'])->name('justificatif');
+});
 
 //salaires
 Route::get('/salaires', [SalaireController::class, 'index'])
@@ -308,3 +313,86 @@ Route::put('/roles/{id}', [RoleController::class, 'update'])
 
 Route::delete('/roles/{id}', [RoleController::class, 'destroy'])
     ->name('roles.destroy');
+
+
+// ================= DÉPARTEMENTS =================
+
+Route::get('/departements', [DepartementController::class, 'index'])
+    ->name('departements.index');
+
+Route::get('/departements/creer', [DepartementController::class, 'create'])
+    ->name('departements.create');
+
+Route::post('/departements', [DepartementController::class, 'store'])
+    ->name('departements.store');
+
+Route::get('/departements/{departement}/modifier', [DepartementController::class, 'edit'])
+    ->name('departements.edit');
+
+Route::put('/departements/{departement}', [DepartementController::class, 'update'])
+    ->name('departements.update');
+
+Route::delete('/departements/{departement}', [DepartementController::class, 'destroy'])
+    ->name('departements.destroy');
+
+
+// ================= POSTES =================
+
+Route::get('/postes', [PosteController::class, 'index'])
+    ->name('postes.index');
+
+Route::get('/postes/creer', [PosteController::class, 'create'])
+    ->name('postes.create');
+
+Route::post('/postes', [PosteController::class, 'store'])
+    ->name('postes.store');
+
+Route::get('/postes/{poste}/modifier', [PosteController::class, 'edit'])
+    ->name('postes.edit');
+
+Route::put('/postes/{poste}', [PosteController::class, 'update'])
+    ->name('postes.update');
+
+Route::delete('/postes/{poste}', [PosteController::class, 'destroy'])
+    ->name('postes.destroy');
+
+
+// tenant
+Route::get('/tenants', [TenantController::class, 'index'])
+    ->name('tenants.index');
+
+Route::get('/tenants/{tenant}', [TenantController::class, 'show'])
+    ->name('tenants.show');
+
+Route::patch('/tenants/{tenant}/valider', [TenantController::class, 'valider'])
+    ->name('tenants.valider');
+
+Route::patch('/tenants/{tenant}/suspendre', [TenantController::class, 'suspendre'])
+    ->name('tenants.suspendre');
+
+Route::patch('/tenants/{tenant}/categorie', [TenantController::class, 'changerCategorie'])
+    ->name('tenants.categorie');
+
+// notification
+
+Route::get('/notifications', [NotificationController::class, 'index'])
+    ->name('notifications.index');
+
+Route::put('/notifications/{notification}/lue', [NotificationController::class, 'marquerLue'])
+    ->name('notifications.marquerLue');
+
+Route::put('/notifications/marquer-toutes-lues', [NotificationController::class, 'marquerToutesLues'])
+    ->name('notifications.marquerToutesLues');
+
+// Mot de passe oublié
+Route::get('/mot-de-passe-oublie', [ForgotPasswordController::class, 'show'])
+    ->name('password.request');
+
+Route::post('/mot-de-passe-oublie', [ForgotPasswordController::class, 'envoyer'])
+    ->name('password.email');
+
+Route::get('/reinitialiser-mot-de-passe/{token}', [ForgotPasswordController::class, 'formulaireReinitialisation'])
+    ->name('password.reset');
+
+Route::post('/reinitialiser-mot-de-passe', [ForgotPasswordController::class, 'reinitialiser'])
+    ->name('password.update');

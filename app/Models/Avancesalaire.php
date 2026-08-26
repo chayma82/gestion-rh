@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\Loggable;
 
 class AvanceSalaire extends Model
 {
-    use HasFactory;
-
+    use HasFactory, Loggable;   
     protected $table = 'avance_salaire';
 
     const CREATED_AT = 'date_creation';

@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\Loggable;
 
 class FactureAchat extends Model
 {
+    use  Loggable;
     protected $table = 'facture_achat';
 
     protected $casts = [
@@ -38,5 +40,5 @@ class FactureAchat extends Model
     {
         return $query->where('statut', 'archive');
     }
-   
+
 }

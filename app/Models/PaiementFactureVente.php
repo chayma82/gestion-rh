@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\Loggable;
 
 class PaiementFactureVente extends Model
 {
+    
     protected $table = 'paiement_facture_vente';
 
     protected $casts = [

@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\Loggable;
 
 class Client extends Model
 {
+        use  Loggable;
     protected $table = 'clients';
 
     protected $fillable = [

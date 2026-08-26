@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Contrat;
 use App\Models\Notification;
+use App\Models\Utilisateur;
 use App\Services\NotificationService;
 use Carbon\Carbon;
 
@@ -30,18 +31,35 @@ class VerifierContratsExpirants extends Command
 
                 // Anti-doublon : si la commande tourne plusieurs fois le même
                 // jour (ou est relancée manuellement), on ne renotifie pas.
-                // Pas de colonne dédiée dans la table notification, donc on
-                // se base sur le contenu du message + la date de réception.
+                // On se base maintenant sur reference_id (= contrat->id),
+                // plus fiable qu'un "like" sur le message.
+                //
+                // IMPORTANT : ce contrôle doit se faire AVANT la boucle sur
+                // les destinataires, pas dedans — sinon dès qu'un premier
+                // destinataire est notifié, les suivants seraient injustement
+                // sautés au prochain passage de la commande le même jour.
                 $dejaNotifie = Notification::where('type', 'contrat')
-                    ->where('message', 'like', "%{$contrat->numcontrat}%{$jours} jours%")
+                    ->where('reference_id', $contrat->id)
+                    ->where('message', 'like', "%{$jours} jours%")
                     ->whereDate('date_reception', Carbon::today())
                     ->exists();
 
-                if (!$dejaNotifie) {
-                    NotificationService::contratExpireBientot($contrat, $jours);
-                    $this->info("Notification créée : contrat {$contrat->numcontrat} ({$jours} jours).");
+                if ($dejaNotifie) {
+                    continue;
                 }
 
+                // TODO : filtrer sur les utilisateurs RH/admin du tenant si
+                // votre modèle Utilisateur expose un rôle/scope pour ça.
+                // En l'état, on notifie tous les utilisateurs du tenant du
+                // contrat (comportement precedent : un seul destinataire non
+                // défini, ce qui plantait faute de paramètre).
+                $destinataires = Utilisateur::where('tenant_id', $contrat->tenant_id)->pluck('id');
+
+                foreach ($destinataires as $utilisateurId) {
+                    NotificationService::contratBientotExpire($contrat, $jours, $utilisateurId);
+                }
+
+                $this->info("Notification créée : contrat {$contrat->numcontrat} ({$jours} jours) pour {$destinataires->count()} destinataire(s).");
             }
 
         }

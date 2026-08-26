@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Scopes\TenantScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\Loggable;
 
 class ParametrePaie extends Model
 {
@@ -16,7 +17,7 @@ class ParametrePaie extends Model
     protected $table = 'parametres_paie';
     protected $fillable = ['tenant_id', 'jour_paiement'];
 
-   
+
 
     public function tenant()
     {

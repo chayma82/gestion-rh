@@ -21,7 +21,7 @@ class FactureVenteController extends Controller
 
     public function index(Request $request)
     {
-        $entrepriseId = 1;
+        $entrepriseId = current_entreprise_id();
 
         $factures = FactureVente::actives()
             ->where('entreprise_id', $entrepriseId)
@@ -53,7 +53,7 @@ class FactureVenteController extends Controller
     public function archives()
     {
         $factures = FactureVente::archivees()
-            ->where('entreprise_id', 1)
+            ->where('entreprise_id', current_entreprise_id())
             ->latest('updated_at')
             ->paginate(15);
 
@@ -62,7 +62,7 @@ class FactureVenteController extends Controller
 
     public function create()
     {
-        $clients = Client::where('entreprise_id', 1)
+        $clients = Client::where('entreprise_id', current_entreprise_id())
             ->where('status', 'actif')
             ->orderBy('nom')
             ->get();
@@ -89,7 +89,7 @@ class FactureVenteController extends Controller
 
         DB::transaction(function () use ($data, $request) {
             $client = Client::findOrFail($data['client_id']);
-            $entrepriseId = 1;
+            $entrepriseId = current_entreprise_id();
 
             $montantHt  = 0;
             $montantTva = 0;
@@ -102,7 +102,7 @@ class FactureVenteController extends Controller
             $dernierNumero = FactureVente::where('entreprise_id', $entrepriseId)->count() + 1;
 
             $facture = FactureVente::create([
-                'tenant_id'           => 1,
+                'tenant_id'           => current_tenant_id(),
                 'entreprise_id'       => $entrepriseId,
                 'client_id'           => $client->id,
                 'nom_client'          => $client->nom,
@@ -159,7 +159,7 @@ class FactureVenteController extends Controller
 
     public function edit(FactureVente $facture)
     {
-        $clients = Client::where('entreprise_id', 1)
+        $clients = Client::where('entreprise_id', current_entreprise_id())
             ->where('status', 'actif')
             ->orderBy('nom')
             ->get();

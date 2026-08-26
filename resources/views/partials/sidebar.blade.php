@@ -8,12 +8,19 @@
         </div>
 
         <div class="leading-tight overflow-hidden">
-            <h2 class="text-base font-bold text-gray-900 truncate">
-                Portail RH
-            </h2>
-            <p class="text-xs text-gray-400 truncate">
-                Admin Global
-            </p>
+            @php
+                $utilisateur = current_utilisateur();
+            @endphp
+
+            <div class="leading-tight overflow-hidden">
+                <h2 class="text-base font-bold text-gray-900 truncate">
+                    {{ $utilisateur?->entreprise?->nom ?? 'Portail RH' }}
+                </h2>
+
+                <p class="text-xs text-gray-400 truncate">
+                    {{ $utilisateur?->role?->nom ?? 'Utilisateur' }}
+                </p>
+            </div>
         </div>
 
     </div>
@@ -197,7 +204,11 @@
 
     $rolesActif = request()->routeIs('roles.*');
 
-    $parametresActif = $utilisateursActif || $rolesActif;
+    $departementsActif = request()->routeIs('departements.*');
+
+    $postesActif = request()->routeIs('postes.*');
+
+    $parametresActif = $utilisateursActif || $rolesActif || $departementsActif || $postesActif;
     @endphp
 
     <!-- ================= VENTES ================= -->
@@ -341,6 +352,30 @@
                     'text-gray-600 hover:text-[#E2721B]' => !$rolesActif,
                 ])>
                 Rôles
+            </a>
+        </li>
+
+        <!-- Départements -->
+        <li>
+            <a href="{{ route('departements.index') }}"
+                @class([
+                    'block text-sm',
+                    'text-[#E2721B] font-semibold' => $departementsActif,
+                    'text-gray-600 hover:text-[#E2721B]' => !$departementsActif,
+                ])>
+                Départements
+            </a>
+        </li>
+
+        <!-- Postes -->
+        <li>
+            <a href="{{ route('postes.index') }}"
+                @class([
+                    'block text-sm',
+                    'text-[#E2721B] font-semibold' => $postesActif,
+                    'text-gray-600 hover:text-[#E2721B]' => !$postesActif,
+                ])>
+                Postes
             </a>
         </li>
 

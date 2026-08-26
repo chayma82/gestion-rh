@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Concerns\Loggable;
 
 class Employe extends Model
 {
-    use HasFactory;
-
+    use HasFactory, Loggable;
     protected $table = 'employe';
 
     const CREATED_AT = 'date_creation';

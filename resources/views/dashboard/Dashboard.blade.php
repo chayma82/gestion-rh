@@ -164,26 +164,31 @@
 
         </div>
 
-        {{-- Notifications --}}
+        {{-- Notifications : mêmes données que le topbar (table notification réelle) --}}
         <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-6">
 
-            <h3 class="text-lg font-semibold text-gray-900 mb-5">
-                Notifications
-            </h3>
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Notifications
+                </h3>
+                <a href="{{ route('notifications.index') }}" class="text-xs text-[#E2721B] hover:underline font-medium">
+                    Tout voir
+                </a>
+            </div>
 
             <div class="space-y-5">
 
                 @forelse($notifications as $n)
                     <div class="flex items-start gap-3">
 
-                        <div class="w-9 h-9 rounded-full {{ $n['color'] }} flex items-center justify-center shrink-0">
-                            <i class="fa-solid {{ $n['icon'] }} text-xs"></i>
+                        <div class="w-9 h-9 rounded-full {{ $n->couleur }} flex items-center justify-center shrink-0">
+                            <i class="fa-solid {{ $n->icon }} text-xs"></i>
                         </div>
 
                         <div>
-                            <p class="text-sm font-semibold text-gray-800">{{ $n['titre'] }}</p>
-                            <p class="text-sm text-gray-500 leading-snug">{{ $n['texte'] }}</p>
-                            <p class="text-xs text-gray-400 mt-1">{{ $n['temps'] }}</p>
+                            <p class="text-sm font-semibold text-gray-800">{{ $n->titre }}</p>
+                            <p class="text-sm text-gray-500 leading-snug">{{ $n->message }}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ $n->date_reception?->diffForHumans() }}</p>
                         </div>
 
                     </div>

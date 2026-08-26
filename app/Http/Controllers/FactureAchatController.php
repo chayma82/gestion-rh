@@ -12,7 +12,7 @@ class FactureAchatController extends Controller
 {
     public function index(Request $request)
     {
-        $entrepriseId =  1;
+        $entrepriseId = current_entreprise_id();
 
         $factures = FactureAchat::actives()
             ->where('entreprise_id', $entrepriseId)
@@ -46,7 +46,7 @@ class FactureAchatController extends Controller
     public function archives()
     {
         $factures = FactureAchat::archivees()
-            ->where('entreprise_id',  1)
+            ->where('entreprise_id', current_entreprise_id())
             ->latest('updated_at')
             ->paginate(15);
 
@@ -55,7 +55,7 @@ class FactureAchatController extends Controller
 
     public function create()
     {
-        $fournisseurs = Fournisseur::where('entreprise_id',  1)->orderBy('nom')->get();
+        $fournisseurs = Fournisseur::where('entreprise_id', current_entreprise_id())->orderBy('nom')->get();
 
         return view('factures.achats.create', compact('fournisseurs'));
     }
@@ -76,7 +76,7 @@ class FactureAchatController extends Controller
 
         DB::transaction(function () use ($data, $request) {
             $fournisseur = Fournisseur::findOrFail($data['fournisseur_id']);
-            $entrepriseId =  1;
+            $entrepriseId = current_entreprise_id();
 
             $montantHt = 0;
             foreach ($data['lignes'] as $ligne) {
@@ -87,7 +87,7 @@ class FactureAchatController extends Controller
             $dernierNumero = FactureAchat::where('entreprise_id', $entrepriseId)->count() + 1;
 
             $facture = FactureAchat::create([
-                'tenant_id'           =>  1,
+                'tenant_id'           => current_tenant_id(),
                 'entreprise_id'       => $entrepriseId,
                 'fournisseur_id'      => $fournisseur->id,
                 'numFacture'          => 'FA-' . now()->year . '-' . str_pad($dernierNumero, 4, '0', STR_PAD_LEFT),
@@ -139,7 +139,7 @@ class FactureAchatController extends Controller
 
     public function edit(FactureAchat $facture)
     {
-        $fournisseurs = Fournisseur::where('entreprise_id',  1)->orderBy('nom')->get();
+        $fournisseurs = Fournisseur::where('entreprise_id', current_entreprise_id())->orderBy('nom')->get();
 
         return view('factures.achats.edit', compact('facture', 'fournisseurs'));
     }
@@ -262,7 +262,7 @@ class FactureAchatController extends Controller
     public function payerTout()
     {
         FactureAchat::actives()
-            ->where('entreprise_id',  1)
+            ->where('entreprise_id', current_entreprise_id())
             ->where('statut', '!=', 'payee')
             ->get()
             ->each(fn ($f) => $f->update(['statut' => 'payee', 'montant_paye' => $f->montant_ttc]));

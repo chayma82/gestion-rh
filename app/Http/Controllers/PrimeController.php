@@ -13,7 +13,7 @@ class PrimeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Prime::with('employe');
+        $query = Prime::with('employe')->where('tenant_id', current_tenant_id());
 
        if ($request->q) {
 
@@ -81,7 +81,7 @@ class PrimeController extends Controller
             if (!$salaire->exists) {
                 $dernierSalaire = $employe->salaires()->latest('periode')->first();
 
-                $salaire->tenant_id     = 1;
+                $salaire->tenant_id     = current_tenant_id();
                 $salaire->salaire_brut  = $dernierSalaire->salaire_brut ?? 0;
                 $salaire->total_primes  = 0;
                 $salaire->total_avances = 0;
@@ -89,7 +89,7 @@ class PrimeController extends Controller
             }
 
             Prime::create([
-                'tenant_id'  => 1,
+                'tenant_id'  => current_tenant_id(),
                 'employe_id' => $employe->id,
                 'contrat_id' => $contrat->id,
                 'montant'    => $validated['montant'],

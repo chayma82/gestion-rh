@@ -15,7 +15,7 @@ class ContratController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Contrat::with('employe');
+        $query = Contrat::with('employe')->where('tenant_id', current_tenant_id());
 
         if ($request->filled('q')) {
             $recherche = $request->q;
@@ -39,9 +39,9 @@ class ContratController extends Controller
 
         $contrats = $query->latest()->paginate(15)->withQueryString();
 
-        $totalcontrat = Contrat::count();
-        $totalcontratActif = Contrat::where('statut', 'actif')->count();
-        $totalcontratExpire = Contrat::where('statut', 'expire')->count();
+        $totalcontrat = Contrat::where('tenant_id', current_tenant_id())->count();
+        $totalcontratActif = Contrat::where('tenant_id', current_tenant_id())->where('statut', 'actif')->count();
+        $totalcontratExpire = Contrat::where('tenant_id', current_tenant_id())->where('statut', 'expire')->count();
 
         return view(
             'employes.contrats.liste',
@@ -56,7 +56,7 @@ class ContratController extends Controller
 
     public function create()
     {
-        $employes = Employe::where('tenant_id', 1)
+        $employes = Employe::where('tenant_id', current_tenant_id())
             ->where('statutEmploye', '!=', 'archive')
             ->whereDoesntHave('contrats', function ($query) {
                 $query->whereIn('statut', ['actif', 'a_venir']);
@@ -64,11 +64,11 @@ class ContratController extends Controller
             ->orderBy('nom')
             ->get();
 
-        $departements = Departement::where('tenant_id', 1)
+        $departements = Departement::where('tenant_id', current_tenant_id())
             ->orderBy('libelle')
             ->get();
 
-        $postes = Poste::where('tenant_id', 1)
+        $postes = Poste::where('tenant_id', current_tenant_id())
             ->orderBy('libelle')
             ->get();
 
@@ -150,7 +150,7 @@ class ContratController extends Controller
          * On insère donc une valeur temporaire, puis on la remplace juste après.
          */
         $contrat = Contrat::create([
-            'tenant_id' => 1,
+            'tenant_id' => current_tenant_id(),
             'employe_id' => $employe->id,
             'departement_id' => $departement->id,
             'poste_id' => $validated['poste_id'],
@@ -194,11 +194,11 @@ class ContratController extends Controller
 
         $contrat->load(['employe', 'departement', 'poste']);
 
-        $departements = Departement::where('tenant_id', 1)
+        $departements = Departement::where('tenant_id', current_tenant_id())
             ->orderBy('libelle')
             ->get();
 
-        $postes = Poste::where('tenant_id', 1)
+        $postes = Poste::where('tenant_id', current_tenant_id())
             ->orderBy('libelle')
             ->get();
 

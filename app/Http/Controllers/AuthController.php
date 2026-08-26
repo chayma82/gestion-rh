@@ -5,17 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NouvelleDemandeEntrepriseMail;
 use App\Models\Tenant;
 use App\Models\TenantCategorie;
+use App\Models\Entreprise;
+use App\Models\Log;
 use App\Models\Role;
 use App\Models\Utilisateur;
 
 class AuthController extends Controller
 {
-    // Formulaire de connexion
     public function authi()
     {
-        // Déjà connecté ? Inutile de repasser par le login.
         if (current_utilisateur()) {
             return redirect()->route('Dashboard.index');
         }
@@ -23,62 +25,99 @@ class AuthController extends Controller
         return view('auth.Auth');
     }
 
-    // Formulaire de demande de création de compte entreprise
     public function create()
     {
         return view('auth.ajoutentreprise');
     }
 
-    // Traitement du formulaire ci-dessus : crée le tenant + l'admin, EN ATTENTE de validation
+    // Traitement du formulaire : crée le tenant + l'entreprise + l'admin, EN ATTENTE de validation
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nom_entreprise' => 'required|string|max:100',
-            'nom'            => 'required|string|max:100',
-            'prenom'         => 'required|string|max:100',
-            'email'          => 'required|email|max:150|unique:utilisateur,email',
-            'telephone'      => 'nullable|string|max:30',
-            'motdepasse'     => 'required|string|min:8|confirmed',
+            // Entreprise
+            'nom_entreprise'       => 'required|string|max:150',
+            'num_fiscal'           => 'required|string|max:50|unique:entreprise,num_fiscal',
+            'secteur_activite'     => 'required|string|max:100',
+            'email_entreprise'     => 'required|email|max:150|unique:entreprise,email',
+            'telephone_entreprise' => 'nullable|string|max:30',
+            'adresse'              => 'required|string|max:255',
+            'ville'                => 'required|string|max:100',
+            'code_postal'          => 'required|string|max:20',
+
+            // Administrateur
+            'nom'                  => 'required|string|max:100',
+            'prenom'               => 'required|string|max:100',
+            'email_admin'          => 'required|email|max:150|unique:utilisateur,email',
+            'telephone_admin'      => 'nullable|string|max:30',
+            'motdepasse'           => 'required|string|min:8|confirmed',
         ]);
 
-        $tenant = DB::transaction(function () use ($validated) {
+        // La transaction retourne les 3 objets créés (tenant, entreprise, utilisateur admin)
+        // pour pouvoir ensuite les transmettre tels quels au mail de notification et au log.
+        [$tenant, $entreprise, $utilisateur] = DB::transaction(function () use ($validated) {
 
-            // Catégorie par défaut à l'inscription : Basique.
-            // Une équipe interne pourra la faire évoluer manuellement après validation.
             $categorieBasique = TenantCategorie::where('nom', 'Basique')->first();
 
+            // Le tenant porte automatiquement le même nom que l'entreprise
             $tenant = Tenant::create([
                 'nom' => $validated['nom_entreprise'],
                 'tenant_categorie_id' => $categorieBasique?->id,
             ]);
 
-            // Rôle Admin par défaut pour ce nouveau tenant
+            $entreprise = Entreprise::create([
+                'tenant_id'        => $tenant->id,
+                'nom'              => $validated['nom_entreprise'],
+                'email'            => $validated['email_entreprise'],
+                'secteur_activite' => $validated['secteur_activite'],
+                'adresse'          => $validated['adresse'],
+                'ville'            => $validated['ville'],
+                'code_postal'      => $validated['code_postal'],
+                'num_fiscal'       => $validated['num_fiscal'],
+                'telephone'        => $validated['telephone_entreprise'] ?? null,
+            ]);
+
             $roleAdmin = Role::firstOrCreate([
                 'tenant_id' => $tenant->id,
                 'nom' => 'Admin',
             ]);
 
-            Utilisateur::create([
-                'tenant_id' => $tenant->id,
-                'entreprise_id' => 1,
-                'role_id' => $roleAdmin->id,
-                'nom' => $validated['nom'],
-                'prenom' => $validated['prenom'],
-                'email' => $validated['email'],
-                'telephone' => $validated['telephone'] ?? null,
-                'motdepasse' => $validated['motdepasse'], // hashé automatiquement par le modèle
-                'actif' => false, // en attente de validation manuelle par votre équipe
+            $utilisateur = Utilisateur::create([
+                'tenant_id'     => $tenant->id,
+                'entreprise_id' => $entreprise->id,
+                'role_id'       => $roleAdmin->id,
+                'nom'           => $validated['nom'],
+                'prenom'        => $validated['prenom'],
+                'email'         => $validated['email_admin'],
+                'telephone'     => $validated['telephone_admin'] ?? null,
+                'motdepasse'    => $validated['motdepasse'], // hashé automatiquement par le modèle
+                'actif'         => false, // en attente de validation manuelle par votre équipe
             ]);
 
-            return $tenant;
+            return [$tenant, $entreprise, $utilisateur];
         });
+
+        // Journalise la demande de création (utilisateur_id = null : personne n'est encore
+        // authentifiée, c'est l'admin lui-même qui vient de s'auto-inscrire).
+        Log::enregistrer(
+            tenantId: $tenant->id,
+            utilisateurId: null,
+            recordId: $tenant->id,
+            nomTable: 'tenant',
+            description: "Nouvelle demande d'inscription : entreprise « {$entreprise->nom} », admin {$utilisateur->email}",
+        );
+
+        // Notifie l'équipe (vous) qu'une nouvelle entreprise attend validation,
+        // avec toutes les infos de l'entreprise + de l'admin demandé.
+        $tenant->load('tenantCategorie');
+
+        Mail::to(config('mail.admin_notification_address', config('mail.from.address')))
+            ->send(new NouvelleDemandeEntrepriseMail($tenant, $entreprise, $utilisateur));
 
         return redirect()
             ->route('auth.success')
             ->with('nomEntreprise', $tenant->nom);
     }
 
-    // Page de confirmation après la demande
     public function success()
     {
         return view('auth.successajout', [
@@ -86,7 +125,6 @@ class AuthController extends Controller
         ]);
     }
 
-    // Connexion réelle (avant : redirigeait vers le dashboard sans rien vérifier)
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -97,12 +135,32 @@ class AuthController extends Controller
         $utilisateur = Utilisateur::where('email', $credentials['email'])->first();
 
         if (!$utilisateur || !Hash::check($credentials['password'], $utilisateur->motdepasse)) {
+            // Tentative échouée : on journalise quand même si l'email correspond
+            // à un compte existant (utile pour détecter des tentatives d'intrusion).
+            if ($utilisateur) {
+                Log::enregistrer(
+                    tenantId: $utilisateur->tenant_id,
+                    utilisateurId: $utilisateur->id,
+                    recordId: $utilisateur->id,
+                    nomTable: 'utilisateur',
+                    description: "Tentative de connexion échouée (mot de passe incorrect) pour {$utilisateur->email}",
+                );
+            }
+
             return back()
                 ->withErrors(['email' => 'Identifiants incorrects.'])
                 ->onlyInput('email');
         }
 
         if (!$utilisateur->actif) {
+            Log::enregistrer(
+                tenantId: $utilisateur->tenant_id,
+                utilisateurId: $utilisateur->id,
+                recordId: $utilisateur->id,
+                nomTable: 'utilisateur',
+                description: "Tentative de connexion refusée : compte inactif ({$utilisateur->email})",
+            );
+
             return back()
                 ->withErrors(['email' => "Ce compte est en attente de validation ou a été désactivé."])
                 ->onlyInput('email');
@@ -115,12 +173,31 @@ class AuthController extends Controller
             'tenant_id'      => $utilisateur->tenant_id,
         ]);
 
+        Log::enregistrer(
+            tenantId: $utilisateur->tenant_id,
+            utilisateurId: $utilisateur->id,
+            recordId: $utilisateur->id,
+            nomTable: 'utilisateur',
+            description: "Connexion réussie de {$utilisateur->email}",
+        );
+
         return redirect()->intended(route('Dashboard.index'));
     }
 
-    // Déconnexion réelle (avant : ne vidait pas la session, donc l'utilisateur restait connecté)
     public function logout(Request $request)
     {
+        $utilisateur = current_utilisateur();
+
+        if ($utilisateur) {
+            Log::enregistrer(
+                tenantId: $utilisateur->tenant_id,
+                utilisateurId: $utilisateur->id,
+                recordId: $utilisateur->id,
+                nomTable: 'utilisateur',
+                description: "Déconnexion de {$utilisateur->email}",
+            );
+        }
+
         $request->session()->forget(['utilisateur_id', 'tenant_id']);
         $request->session()->invalidate();
         $request->session()->regenerateToken();

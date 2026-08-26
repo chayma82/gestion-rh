@@ -35,7 +35,24 @@
             </div>
 
             <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] px-10 py-10">
+                @if (session('status'))
+                    <div class="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                        {{ session('status') }}
+                    </div>
+                @endif
+                @if ($errors->any())
+    <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div class="flex items-start gap-2">
+            <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
 
+            <div>
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+        </div>
+    </div>
+@endif
                 <form action="{{ route('login') }}" method="POST">
 
 
@@ -65,7 +82,7 @@
                                 Mot de passe
                             </label>
 
-                            <a href="#" class="text-xs font-semibold text-[#E2721B] hover:underline">
+                            <a href="{{ route('password.request') }}" class="text-xs font-semibold text-[#E2721B] hover:underline">
                                 Mot de passe oublié ?
                             </a>
 

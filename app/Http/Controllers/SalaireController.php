@@ -16,7 +16,7 @@ class SalaireController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = 1;
+        $tenantId = current_tenant_id();
 
         $query = Salaire::with(['employe', 'contrat'])
             ->where('tenant_id', $tenantId);
@@ -75,7 +75,7 @@ class SalaireController extends Controller
 
     public function create()
     {
-        $employes = Employe::where('tenant_id', 1)
+        $employes = Employe::where('tenant_id', current_tenant_id())
             ->whereHas('contrats', function ($query) {
                 $query->where('statut', 'actif');
             })
@@ -151,7 +151,7 @@ class SalaireController extends Controller
             ]);
 
             if (!$salaire->exists) {
-                $salaire->tenant_id = 1;
+                $salaire->tenant_id = current_tenant_id();
                 $salaire->employe_id = $employe->id;
                 $salaire->salaire_brut = $contrat->salaire_base ?? 0;
                 $salaire->total_primes = 0;
@@ -184,7 +184,7 @@ class SalaireController extends Controller
                 }
 
                 AvanceSalaire::create([
-                    'tenant_id' => 1,
+                    'tenant_id' => current_tenant_id(),
                     'employe_id' => $employe->id,
                     'contrat_id' => $contrat->id,
                     'montant' => $validated['avance'],
@@ -197,7 +197,7 @@ class SalaireController extends Controller
 
             if (!empty($validated['montant_prime'])) {
                 Prime::create([
-                    'tenant_id' => 1,
+                    'tenant_id' => current_tenant_id(),
                     'employe_id' => $employe->id,
                     'contrat_id' => $contrat->id,
                     'montant' => $validated['montant_prime'],
@@ -244,7 +244,7 @@ class SalaireController extends Controller
 
     public function payerTous(Request $request)
     {
-        $tenantId = 1;
+        $tenantId = current_tenant_id();
 
         $periode = $request->input(
             'periode',
@@ -272,7 +272,7 @@ class SalaireController extends Controller
         ]);
 
         ParametrePaie::updateOrCreate(
-            ['tenant_id' => 1],
+            ['tenant_id' => current_tenant_id()],
             ['jour_paiement' => $request->jour_paiement]
         );
 

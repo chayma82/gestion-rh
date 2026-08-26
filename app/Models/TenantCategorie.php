@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\Loggable;
 
 class TenantCategorie extends Model
 {
-    use HasFactory;
-
+    use HasFactory, Loggable;
     protected $table = 'tenant_categorie';
 
     const CREATED_AT = 'date_creation';

@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Concerns\Loggable;
 
 class Utilisateur extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory,Loggable, Notifiable;
 
     protected $table = 'utilisateur';
 
