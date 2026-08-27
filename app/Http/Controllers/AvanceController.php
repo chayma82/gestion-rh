@@ -42,9 +42,15 @@ class AvanceController extends Controller
 
     public function create()
     {
-        $employes = Employe::whereHas('contrats', function ($query) {
-            $query->where('statut', 'actif');
-        })->get();
+        // Correctif : filtrage par tenant_id ajouté, sinon tous les
+        // employés actifs de tous les tenants remontaient dans le
+        // formulaire d'ajout d'avance.
+        $employes = Employe::where('tenant_id', current_tenant_id())
+            ->whereHas('contrats', function ($query) {
+                $query->where('statut', 'actif');
+            })
+            ->orderBy('nom')
+            ->get();
 
         return view('employes.avances.create', compact('employes'));
     }
@@ -60,7 +66,12 @@ class AvanceController extends Controller
 
         DB::transaction(function () use ($validated) {
 
-            $employe = Employe::findOrFail($validated['employe_id']);
+            // Correctif : on force le tenant_id courant lors du lookup,
+            // la règle de validation 'exists' ne vérifiant pas le tenant.
+            // Sans ça, un employe_id d'un autre tenant pouvait être forgé
+            // dans la requête.
+            $employe = Employe::where('tenant_id', current_tenant_id())
+                ->findOrFail($validated['employe_id']);
 
             $contrat = $employe->contrats()
                 ->where('statut', 'actif')
@@ -118,6 +129,10 @@ class AvanceController extends Controller
 
     public function destroy(AvanceSalaire $avance)
     {
+        // Correctif : vérifier que l'avance appartient bien au tenant
+        // courant avant toute suppression (protection route-model-binding).
+        abort_unless($avance->tenant_id === current_tenant_id(), 403);
+
         DB::transaction(function () use ($avance) {
 
             $periode = $avance->date_avance->format('Y-m');

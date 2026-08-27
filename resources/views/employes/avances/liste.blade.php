@@ -108,7 +108,7 @@
                                 -{{ number_format($avance->montant, 2) }} DT
                             </td>
 
-                            form>
+                            
                             </td>
 
                         </tr>

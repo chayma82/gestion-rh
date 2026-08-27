@@ -24,18 +24,36 @@ class NotificationController extends Controller
     }
 
     /**
-     * Endpoint JSON léger : nombre de non-lues + dernières notifications.
-     * Permet au topbar de se rafraîchir en AJAX (polling) sans recharger
-     * toute la page, en complément du NotificationsComposer qui les injecte
-     * déjà au premier chargement de chaque vue.
+     * Renvoie les notifications non lues de l'utilisateur connecté, en JSON.
+     * Utilisée par le polling JS du topbar (toutes les 15s) pour détecter
+     * les nouvelles notifications créées en arrière-plan (commandes
+     * planifiées) sans attendre un rechargement de page.
+     *
+     * NB : icon/couleur/diff sont pré-calculés ici car ce sont des
+     * accesseurs Eloquent (getIconAttribute, getCouleurAttribute) qui ne
+     * sont PAS inclus automatiquement dans la sérialisation JSON — il
+     * faudrait les ajouter à $appends sur le modèle Notification pour que
+     * $notification->toJson() les inclue tout seul.
      */
     public function nonLues()
     {
         $utilisateurId = current_utilisateur_id();
 
+        $notifications = NotificationService::recentes($utilisateurId, 5)->map(function ($n) {
+            return [
+                'id'      => $n->id,
+                'titre'   => $n->titre,
+                'message' => $n->message,
+                'lue'     => $n->lue,
+                'icon'    => $n->icon,
+                'couleur' => $n->couleur,
+                'diff'    => $n->date_reception?->diffForHumans(),
+            ];
+        });
+
         return response()->json([
             'nonLues'       => NotificationService::compterNonLues($utilisateurId),
-            'notifications' => NotificationService::recentes($utilisateurId),
+            'notifications' => $notifications,
         ]);
     }
 

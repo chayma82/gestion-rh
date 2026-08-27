@@ -88,6 +88,8 @@ Route::get('/salaires/create', [SalaireController::class, 'create'])
     ->name('employes.salaires.create');
 Route::post('/salaires', [SalaireController::class, 'store'])
     ->name('employes.salaires.store');
+Route::get('employes/salaires/export-pdf', [SalaireController::class, 'exporterPdf'])
+    ->name('employes.salaires.export-pdf');
 
 // Paiement individuel / en masse
 Route::post('/salaires/{salaire}/payer', [SalaireController::class, 'payer'])
@@ -153,7 +155,7 @@ Route::post('/auth/create', [AuthController::class, 'store'])
 
 
 
-// ================= CLIENTS =================
+// client
 Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
 Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
 Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
@@ -164,7 +166,7 @@ Route::get('/clients/{client}/archiver', [ClientController::class, 'archiver'])-
 Route::get('/clients/archives', [ClientController::class, 'archives'])->name('clients.archives');
 Route::get('/clients/{client}/desarchiver', [ClientController::class, 'desarchiver'])->name('clients.desarchiver');
 
-// ================= FOURNISSEURS =================
+// fournisseur
 Route::get('/fournisseurs', [FournisseurController::class, 'index'])->name('fournisseurs.index');
 Route::get('/fournisseurs/create', [FournisseurController::class, 'create'])->name('fournisseurs.create');
 Route::post('/fournisseurs', [FournisseurController::class, 'store'])->name('fournisseurs.store');
@@ -270,7 +272,7 @@ Route::get('/factures/ventes/{facture}/pdf', [FactureVenteController::class, 'fa
 
 
 
-// ================= UTILISATEURS =================
+// utilisateur
 
 Route::get('/utilisateurs', [UtilisateurController::class, 'index'])
     ->name('utilisateur.index');
@@ -294,7 +296,7 @@ Route::delete('/utilisateurs/{id}', [UtilisateurController::class, 'destroy'])
     ->name('utilisateurs.destroy');
 
 
-// ================= RÔLES =================
+// role
 
 Route::get('/roles', [RoleController::class, 'index'])
     ->name('roles.index');
@@ -315,7 +317,7 @@ Route::delete('/roles/{id}', [RoleController::class, 'destroy'])
     ->name('roles.destroy');
 
 
-// ================= DÉPARTEMENTS =================
+// departement
 
 Route::get('/departements', [DepartementController::class, 'index'])
     ->name('departements.index');
@@ -336,8 +338,7 @@ Route::delete('/departements/{departement}', [DepartementController::class, 'des
     ->name('departements.destroy');
 
 
-// ================= POSTES =================
-
+// poste
 Route::get('/postes', [PosteController::class, 'index'])
     ->name('postes.index');
 
@@ -396,3 +397,10 @@ Route::get('/reinitialiser-mot-de-passe/{token}', [ForgotPasswordController::cla
 
 Route::post('/reinitialiser-mot-de-passe', [ForgotPasswordController::class, 'reinitialiser'])
     ->name('password.update');
+
+
+
+//notification
+Route::get('notifications/non-lues', [NotificationController::class, 'nonLues'])
+    ->name('notifications.nonLues');
+

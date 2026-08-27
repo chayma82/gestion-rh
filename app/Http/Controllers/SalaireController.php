@@ -11,15 +11,60 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SalaireController extends Controller
 {
+    /**
+     * Calcule la dernière période (Y-m) autorisée à être visible/exportée,
+     * en fonction du "jour de paiement" configuré pour ce tenant.
+     *
+     * Règle : le mois en cours n'est débloqué que si on a atteint ou
+     * dépassé son jour de paiement ; sinon seul le mois précédent (et les
+     * plus anciens) sont autorisés. Centralisé ici pour que index() et
+     * exporterPdf() appliquent exactement la même règle — un export ne
+     * doit jamais donner accès à une période pas encore affichée dans le
+     * tableau.
+     */
+    protected function periodeCutoff(int $tenantId): string
+    {
+        $parametrePaie = ParametrePaie::where('tenant_id', $tenantId)->first();
+        $jourPaiement  = $parametrePaie->jour_paiement ?? 1;
+
+        $aujourdhui = Carbon::today();
+
+        return $aujourdhui->day >= $jourPaiement
+            ? $aujourdhui->format('Y-m')
+            : $aujourdhui->copy()->subMonthNoOverflow()->format('Y-m');
+    }
+
     public function index(Request $request)
     {
         $tenantId = current_tenant_id();
 
+        $parametrePaie = ParametrePaie::where('tenant_id', $tenantId)->first();
+        $jourPaiement  = $parametrePaie->jour_paiement ?? 1;
+
+        /*
+         * Une fiche de salaire ne doit apparaître dans le tableau qu'à
+         * partir du "jour de paiement" configuré du mois concerné — même
+         * si elle existe déjà en base (créée en avance dès qu'une prime
+         * ou une avance datée sur ce mois a été ajoutée). Sans ce filtre,
+         * ajouter une prime avec une date de septembre faisait apparaître
+         * tout de suite un groupe "Septembre 2026" dans le tableau, avant
+         * même que le mois d'août ne soit terminé.
+         *
+         * Règle : la période courante (mois en cours) n'est visible que
+         * si on a atteint ou dépassé le jour de paiement configuré ce
+         * mois-ci. Sinon, seule les périodes antérieures sont visibles.
+         * Les périodes futures (au-delà du mois en cours) restent
+         * toujours masquées, quel que soit le jour du mois.
+         */
+        $periodeCutoff = $this->periodeCutoff($tenantId);
+
         $query = Salaire::with(['employe', 'contrat'])
-            ->where('tenant_id', $tenantId);
+            ->where('tenant_id', $tenantId)
+            ->where('periode', '<=', $periodeCutoff);
 
         if ($request->filled('q')) {
             $recherche = $request->q;
@@ -38,15 +83,39 @@ class SalaireController extends Controller
             $query->where('statut', $request->statut);
         }
 
-        $salaires = $query
-            ->latest('date_creation')
-            ->paginate(15)
-            ->withQueryString();
+        /*
+         * Regroupement par mois (periode) plutôt que liste plate paginée :
+         * une pagination classique (paginate(15)) coupait les mois n'importe
+         * où au milieu d'une page, ce qui rendait tout regroupement visuel
+         * incohérent d'une page à l'autre. On récupère donc tout ce qui
+         * correspond aux filtres, trié du mois le plus récent au plus
+         * ancien, puis on groupe en mémoire.
+         *
+         * NB : si le volume de données grossit beaucoup (des années
+         * d'historique avec beaucoup d'employés), il faudra remplacer ceci
+         * par une pagination au niveau des MOIS plutôt que des lignes
+         * (ex: ne charger que les 12 derniers mois par défaut, avec un
+         * filtre "voir plus ancien").
+         */
+        $salaires = $query->latest('periode')->get();
 
-        $totalsalaire = Salaire::where('tenant_id', $tenantId)->count();
+        $salairesParMois = $salaires
+            ->groupBy('periode')
+            ->sortKeysDesc()
+            ->map(function ($salairesDuMois) {
+                // Tri par nom d'employé à l'intérieur de chaque mois, pour
+                // un affichage stable (latest('periode') ne trie que par
+                // periode, pas par employé).
+                return $salairesDuMois->sortBy(fn ($s) => $s->employe->nom ?? '');
+            });
+
+        $totalsalaire = Salaire::where('tenant_id', $tenantId)
+            ->where('periode', '<=', $periodeCutoff)
+            ->count();
 
         $masseSalariale = Salaire::query()
             ->where('tenant_id', $tenantId)
+            ->where('periode', '<=', $periodeCutoff)
             ->when(
                 $request->filled('mois'),
                 fn ($q) => $q->where('periode', 'like', '%-' . $request->mois)
@@ -60,13 +129,11 @@ class SalaireController extends Controller
             )
             ->value('total');
 
-        $parametrePaie = ParametrePaie::where('tenant_id', $tenantId)->first();
-
         return view(
             'employes.salaires.liste',
             compact(
                 'totalsalaire',
-                'salaires',
+                'salairesParMois',
                 'masseSalariale',
                 'parametrePaie'
             )
@@ -103,7 +170,12 @@ class SalaireController extends Controller
         ]);
 
         DB::transaction(function () use ($validated) {
-            $employe = Employe::findOrFail($validated['employe_id']);
+            // Correctif : on force le tenant_id courant lors du lookup,
+            // la règle de validation 'exists' ne vérifiant pas le tenant.
+            // Sans ça, un employe_id d'un autre tenant pouvait être forgé
+            // dans la requête.
+            $employe = Employe::where('tenant_id', current_tenant_id())
+                ->findOrFail($validated['employe_id']);
 
             $contrat = $employe->contrats()
                 ->where('statut', 'actif')
@@ -218,6 +290,10 @@ class SalaireController extends Controller
 
     public function payer(Salaire $salaire)
     {
+        // Correctif : le route-model-binding ne filtre pas par tenant,
+        // on vérifie donc explicitement l'appartenance du salaire.
+        abort_unless($salaire->tenant_id === current_tenant_id(), 403);
+
         $salaire->update([
             'statut' => 'paye',
             'date_paiement' => now(),
@@ -231,6 +307,10 @@ class SalaireController extends Controller
 
     public function annulerPaiement(Salaire $salaire)
     {
+        // Correctif : le route-model-binding ne filtre pas par tenant,
+        // on vérifie donc explicitement l'appartenance du salaire.
+        abort_unless($salaire->tenant_id === current_tenant_id(), 403);
+
         $salaire->update([
             'statut' => 'en_attente',
             'date_paiement' => null,
@@ -280,5 +360,66 @@ class SalaireController extends Controller
             'success',
             'Jour de paiement mis à jour.'
         );
+    }
+
+    /**
+     * Génère un PDF imprimable de la fiche de salaires d'une période.
+     *
+     * Par défaut, exporte la période actuellement débloquée (le mois
+     * affiché en haut du tableau). On peut aussi demander explicitement
+     * une période passée via ?periode=2026-08, mais jamais une période
+     * pas encore débloquée par le jour de paiement (même règle que
+     * index()) : le lien "Exporter" du tableau bascule donc tout seul
+     * sur le mois suivant dès que son jour de paiement arrive, sans
+     * aucun code supplémentaire à changer.
+     */
+    public function exporterPdf(Request $request)
+    {
+        $tenantId = current_tenant_id();
+        $periodeCutoff = $this->periodeCutoff($tenantId);
+
+        $periode = $request->filled('periode')
+            ? $request->periode
+            : $periodeCutoff;
+
+        abort_if(
+            $periode > $periodeCutoff,
+            403,
+            "Cette période n'est pas encore disponible."
+        );
+
+        $salaires = Salaire::with(['employe', 'contrat'])
+            ->where('tenant_id', $tenantId)
+            ->where('periode', $periode)
+            ->get()
+            ->sortBy(fn ($s) => $s->employe->nom_complet ?? $s->employe->nom ?? '')
+            ->values();
+
+        if ($salaires->isEmpty()) {
+            return back()->withErrors([
+                'periode' => "Aucun salaire trouvé pour la période {$periode}.",
+            ]);
+        }
+
+        $masseSalariale = $salaires->sum(
+            fn ($s) => (float) $s->salaire_brut + (float) $s->total_primes - (float) $s->total_avances
+        );
+
+        $nbPayes = $salaires->where('statut', 'paye')->count();
+
+        $pdf = Pdf::loadView('employes.salaires.pdf', [
+            'salaires'       => $salaires,
+            'periode'        => $periode,
+            'masseSalariale' => $masseSalariale,
+            'nbPayes'        => $nbPayes,
+            'nbTotal'        => $salaires->count(),
+        ])->setPaper('a4', 'landscape');
+
+        // stream() ouvre le PDF dans le navigateur : l'utilisateur peut
+        // alors l'enregistrer OU l'imprimer directement depuis la
+        // visionneuse PDF native du navigateur (icônes imprimante /
+        // télécharger). Remplacer par ->download($nom) pour forcer le
+        // téléchargement immédiat sans aperçu.
+        return $pdf->stream("salaires-{$periode}.pdf");
     }
 }

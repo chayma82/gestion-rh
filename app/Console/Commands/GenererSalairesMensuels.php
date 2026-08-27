@@ -20,27 +20,48 @@ class GenererSalairesMensuels extends Command
     /**
      * Description affichée dans "php artisan list".
      */
-    protected $description = "Génère automatiquement la fiche de salaire du mois pour chaque employé sous contrat actif, le jour de paie configuré.";
+    protected $description = "Génère automatiquement la fiche de salaire du mois pour chaque employé sous contrat actif, le jour de paie configuré, avec calcul au prorata si le contrat ne couvre pas le mois entier.";
 
     public function handle(): int
     {
-        $tenantId = 1;
-
-        $parametrePaie = ParametrePaie::where('tenant_id', $tenantId)->first();
-        $jourPaiement  = $parametrePaie->jour_paiement ?? 3;
-
         $aujourdhui = Carbon::today();
+        $periode    = $aujourdhui->format('Y-m');
+        $totalCrees = 0;
 
-        if (!$this->option('force') && $aujourdhui->day !== $jourPaiement) {
-            $this->info("Aujourd'hui ({$aujourdhui->day}) n'est pas le jour de paie configuré ({$jourPaiement}). Rien à faire.");
-            return self::SUCCESS;
+        // BUG CORRIGÉ : le tenant_id était codé en dur à 1, donc cette
+        // commande ne générait jamais rien pour les autres tenants. On
+        // boucle maintenant sur tous les tenants qui ont au moins un
+        // employé, chacun avec son propre jour de paiement configuré.
+        $tenantIds = Employe::query()->distinct()->pluck('tenant_id');
+
+        foreach ($tenantIds as $tenantId) {
+
+            $parametrePaie = ParametrePaie::where('tenant_id', $tenantId)->first();
+            $jourPaiement  = $parametrePaie->jour_paiement ?? 3;
+
+            if (!$this->option('force') && $aujourdhui->day !== $jourPaiement) {
+                continue;
+            }
+
+            $totalCrees += $this->genererPourTenant($tenantId, $periode, $aujourdhui);
         }
 
-        $periode = $aujourdhui->format('Y-m');
+        $this->info("{$totalCrees} fiche(s) de salaire générée(s) au total pour la période {$periode}.");
+
+        return self::SUCCESS;
+    }
+
+    protected function genererPourTenant(int $tenantId, string $periode, Carbon $aujourdhui): int
+    {
         $nombreCrees = 0;
 
-        // Employés ayant un contrat actif, avec ce contrat préchargé
-        $employes = Employe::whereHas('contrats', fn ($q) => $q->where('statut', 'actif'))
+        $debutMois      = $aujourdhui->copy()->startOfMonth();
+        $finMois        = $aujourdhui->copy()->endOfMonth();
+        $joursDansMois  = $debutMois->daysInMonth;
+
+        // Employés de ce tenant ayant un contrat actif, avec ce contrat préchargé
+        $employes = Employe::where('tenant_id', $tenantId)
+            ->whereHas('contrats', fn ($q) => $q->where('statut', 'actif'))
             ->with(['contrats' => fn ($q) => $q->where('statut', 'actif')->latest('date_debut')])
             ->get();
 
@@ -62,25 +83,55 @@ class GenererSalairesMensuels extends Command
                 continue;
             }
 
-            // Salaire de base repris du dernier bulletin connu (sinon 0)
-            $dernierSalaire = $employe->salaires()->latest('periode')->first();
+            /*
+             * Calcul au prorata si le contrat ne couvre pas le mois entier
+             * (embauche en cours de mois, ou fin de contrat en cours de
+             * mois) :
+             *
+             *   salaire_brut = (salaire_base / nb_jours_du_mois) * jours_travaillés
+             *
+             * Sinon (contrat qui couvre tout le mois), on prend simplement
+             * le salaire_base du contrat.
+             */
+            $debutPeriode = Carbon::parse($contrat->date_debut)->max($debutMois);
+            $finPeriode   = $contrat->date_fin
+                ? Carbon::parse($contrat->date_fin)->min($finMois)
+                : $finMois;
+
+            $joursTravailles = $debutPeriode->lte($finPeriode)
+                ? $debutPeriode->diffInDays($finPeriode) + 1
+                : 0;
+
+            $salaireBase = (float) ($contrat->salaire_base ?? 0);
+
+            $salaireBrut = ($joursTravailles >= $joursDansMois)
+                ? $salaireBase
+                : round(($salaireBase / $joursDansMois) * $joursTravailles, 2);
 
             Salaire::create([
                 'tenant_id'     => $tenantId,
                 'employe_id'    => $employe->id,
                 'contrat_id'    => $contrat->id,
                 'periode'       => $periode,
-                'salaire_brut'  => $dernierSalaire->salaire_brut ?? 0,
+                'salaire_brut'  => $salaireBrut,
                 'total_primes'  => 0,
                 'total_avances' => 0,
                 'statut'        => 'en_attente',
             ]);
 
+            $prorata = $joursTravailles < $joursDansMois
+                ? " (prorata {$joursTravailles}/{$joursDansMois} jours)"
+                : '';
+
+            $this->line("Salaire créé : {$employe->nom_complet} — {$salaireBrut} DT{$prorata}");
+
             $nombreCrees++;
         }
 
-        $this->info("{$nombreCrees} fiche(s) de salaire générée(s) pour la période {$periode}.");
+        if ($nombreCrees > 0) {
+            $this->info("Tenant #{$tenantId} : {$nombreCrees} fiche(s) générée(s).");
+        }
 
-        return self::SUCCESS;
+        return $nombreCrees;
     }
 }

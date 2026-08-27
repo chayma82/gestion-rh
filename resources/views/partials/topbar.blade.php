@@ -203,12 +203,15 @@ document.addEventListener('click', (e) => {
 });
 
 // ------------------------------------------------------------------
-// Notifications : marquer comme lue (au clic) / tout marquer comme lu.
+// Notifications : marquer comme lue (au clic) / tout marquer comme lu /
+// polling automatique toutes les 15s pour détecter les notifications
+// créées en arrière-plan (commandes planifiées) sans recharger la page.
 // Nécessite une balise <meta name="csrf-token" content="{{ csrf_token() }}">
 // dans le <head> du layout (standard Laravel).
 // ------------------------------------------------------------------
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 const notifBadge = document.getElementById('notifBadge');
+const notifListe = document.getElementById('notifListe');
 const notifMarquerToutesLuesBtn = document.getElementById('notifMarquerToutesLues');
 
 function majBadge(nonLues) {
@@ -219,35 +222,103 @@ function majBadge(nonLues) {
     }
 }
 
-document.querySelectorAll('.notif-item').forEach((item) => {
-    item.addEventListener('click', () => {
-        const id = item.dataset.id;
-        const dejaLue = item.dataset.lue === '1';
+// Échappe le HTML injecté depuis les données serveur (titre/message),
+// pour éviter tout risque d'injection si un jour ces champs contiennent
+// du contenu utilisateur non maîtrisé.
+function echapper(texte) {
+    const div = document.createElement('div');
+    div.textContent = texte ?? '';
+    return div.innerHTML;
+}
 
-        // Marque l'élément comme lu visuellement tout de suite (pas
-        // besoin d'attendre la réponse serveur pour une UI réactive).
-        item.classList.remove('bg-orange-50/40');
-        item.querySelector('.notif-dot')?.remove();
-        item.dataset.lue = '1';
+function construireItemHtml(n, estPremier) {
+    const pointNonLu = !n.lue
+        ? '<span class="notif-dot w-1.5 h-1.5 rounded-full bg-[#E2721B] shrink-0"></span>'
+        : '';
 
-        if (dejaLue) return;
+    return `
+        <button type="button" data-id="${n.id}" data-lue="${n.lue ? '1' : '0'}"
+            class="notif-item w-full text-left flex items-start gap-3 py-3.5 ${estPremier ? 'pt-0' : ''} ${!n.lue ? 'bg-orange-50/40' : ''} hover:bg-gray-50 transition rounded-lg px-1 -mx-1">
+            <div class="w-8 h-8 rounded-full ${n.couleur} flex items-center justify-center shrink-0">
+                <i class="fa-solid ${n.icon} text-xs"></i>
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    ${echapper(n.titre)}
+                    ${pointNonLu}
+                </p>
+                <p class="text-sm text-gray-500 leading-snug">${echapper(n.message)}</p>
+                <p class="text-xs text-gray-400 mt-1">${echapper(n.diff)}</p>
+            </div>
+        </button>
+    `;
+}
 
-        fetch(`{{ url('notifications') }}/${id}/lue`, {
-            method: 'PUT',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
-            },
-        })
-            .then((res) => res.json())
-            .then((data) => majBadge(data.nonLues ?? 0))
-            .catch(() => {
-                // En cas d'échec réseau, on laisse l'UI telle quelle plutôt
-                // que de bloquer l'utilisateur ; un rechargement de page
-                // resynchronisera l'état réel avec le serveur.
-            });
+function attacherClicsNotifItems() {
+    document.querySelectorAll('.notif-item').forEach((item) => {
+        item.addEventListener('click', () => {
+            const id = item.dataset.id;
+            const dejaLue = item.dataset.lue === '1';
+
+            item.classList.remove('bg-orange-50/40');
+            item.querySelector('.notif-dot')?.remove();
+            item.dataset.lue = '1';
+
+            if (dejaLue) return;
+
+            fetch(`{{ url('notifications') }}/${id}/lue`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+            })
+                .then((res) => res.json())
+                .then((data) => majBadge(data.nonLues ?? 0))
+                .catch(() => {
+                    // En cas d'échec réseau, on laisse l'UI telle quelle plutôt
+                    // que de bloquer l'utilisateur ; le prochain polling
+                    // resynchronisera l'état réel avec le serveur.
+                });
+        });
     });
-});
+}
+
+function rafraichirNotifications() {
+    fetch(`{{ url('notifications/non-lues') }}`, {
+        headers: { 'Accept': 'application/json' },
+    })
+        .then((res) => res.json())
+        .then((data) => {
+            majBadge(data.nonLues ?? 0);
+
+            if (data.notifications && data.notifications.length > 0) {
+                notifListe.innerHTML = data.notifications
+                    .map((n, index) => construireItemHtml(n, index === 0))
+                    .join('');
+                attacherClicsNotifItems();
+            } else {
+                notifListe.innerHTML = `
+                    <p id="notifVide" class="text-sm text-gray-400 text-center py-6">
+                        Aucune notification pour le moment.
+                    </p>
+                `;
+            }
+
+            if (notifMarquerToutesLuesBtn) {
+                notifMarquerToutesLuesBtn.classList.toggle('hidden', (data.nonLues ?? 0) === 0);
+            }
+        })
+        .catch(() => {
+            // Échec réseau ponctuel : on retentera au prochain intervalle,
+            // pas besoin d'alerter l'utilisateur pour ça.
+        });
+}
+
+attacherClicsNotifItems();
+
+// Polling toutes les 15 secondes.
+setInterval(rafraichirNotifications, 15000);
 
 notifMarquerToutesLuesBtn?.addEventListener('click', () => {
     fetch(`{{ url('notifications/marquer-toutes-lues') }}`, {

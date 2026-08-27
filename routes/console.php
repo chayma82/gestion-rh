@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('employes:synchroniser-statuts')
     ->everyMinute();
 
+Schedule::command('salaires:notifier-echeance')->everyMinute()
+    ->withoutOverlapping();
 
 
 Schedule::command('contrats:actualiser')->everyMinute()
@@ -14,8 +16,9 @@ Schedule::command('contrats:actualiser')->everyMinute()
 Schedule::command('contrats:expirer')->everyMinute()
     ->withoutOverlapping();
 
-Schedule::command('salaires:generer-mensuel')->everyThreeHours()
+Schedule::command('salaires:generer-mensuel')->everyMinute()
     ->withoutOverlapping();
+
 Schedule::command('factures:maj-statuts')->everyMinute()
     ->withoutOverlapping();
 Schedule::command('notifications:verifier-contrats')->everyMinute()

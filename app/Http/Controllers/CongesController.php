@@ -244,10 +244,11 @@ class CongesController extends Controller
         // admins RH du tenant plutôt qu'une seule personne, il faudra
         // boucler ici sur la liste des admins et appeler la méthode pour
         // chacun d'eux.
-        NotificationService::employeEnConge(
-            $employe,
+        NotificationService::employeDebutConge(
+             $employe,
             $conge->date_debut->format('d/m/Y'),
-            $conge->date_fin->format('d/m/Y')
+            $conge->date_fin->format('d/m/Y'),
+            current_utilisateur_id()
         );
 
         return redirect()

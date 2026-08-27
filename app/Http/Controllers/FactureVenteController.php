@@ -169,6 +169,20 @@ class FactureVenteController extends Controller
 
     public function update(Request $request, FactureVente $facture)
     {
+        // Une facture déjà payée est verrouillée : on ne peut plus la
+        // repasser en "en_attente" via ce formulaire générique. Sans ce
+        // garde-fou, montant_paye/montant_restant restaient à jour "payé"
+        // alors que statut redevenait "en_attente" — ce qui provoquait une
+        // collision de numéro de quittance au prochain passage par
+        // enregistrerPaiement() (voir correctif précédent).
+        if ($facture->statut === 'payee') {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'statut' => "Cette facture est déjà payée et ne peut plus être modifiée depuis ce formulaire.",
+                ]);
+        }
+
         // client_id et dateEmissionFacture ne sont plus modifiables : on les fige sur les valeurs existantes
         $data = $request->validate([
             'date_echeance'             => 'required|date|after_or_equal:' . $facture->dateEmissionFacture->format('Y-m-d'),
@@ -284,8 +298,13 @@ class FactureVenteController extends Controller
     /** Enregistre le paiement total (unique) d'une facture et redirige vers la quittance */
     public function enregistrerPaiement(Request $request, FactureVente $facture)
     {
-        // Déjà payée : on ne peut pas payer deux fois
-        if ($facture->statut === 'payee') {
+        // Déjà payée : on ne peut pas payer deux fois.
+        // On vérifie montant_restant EN PLUS de statut, car statut peut être
+        // remis à "en_attente" manuellement via update() (formulaire
+        // d'édition) sans que montant_paye/montant_restant ne soient
+        // réinitialisés — dans ce cas statut seul ne suffit pas à détecter
+        // qu'un paiement existe déjà pour cette facture.
+        if ($facture->statut === 'payee' || (float) $facture->montant_restant <= 0) {
             return redirect()->route('factures.ventes.paiement', $facture->id);
         }
 
@@ -295,7 +314,12 @@ class FactureVenteController extends Controller
         ]);
 
         $paiement = DB::transaction(function () use ($data, $facture) {
-            $numero = 'QT-' . $facture->numFacture . '-001';
+            // Numéro de quittance séquentiel, basé sur le nombre de
+            // paiements déjà enregistrés pour CETTE facture — évite la
+            // collision sur la contrainte unique numero_quittance si un
+            // deuxième paiement se retrouve associé à la même facture.
+            $sequence = $facture->paiements()->count() + 1;
+            $numero   = 'QT-' . $facture->numFacture . '-' . str_pad($sequence, 3, '0', STR_PAD_LEFT);
 
             $paiement = $facture->paiements()->create([
                 'montant'          => $facture->montant_ttc,

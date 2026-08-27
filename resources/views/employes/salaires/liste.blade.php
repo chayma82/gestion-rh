@@ -44,6 +44,20 @@
                 changer le salaire
             </a>
 
+            {{-- Export PDF du mois actuellement affiché (le plus récent
+                 débloqué par le jour de paiement). Comme la clé pointe sur
+                 le premier groupe du tableau, ce lien bascule tout seul
+                 sur le mois suivant dès que son jour de paiement arrive,
+                 sans rien à changer ici. --}}
+            @if($salairesParMois->isNotEmpty())
+                <a href="{{ route('employes.salaires.export-pdf', ['periode' => $salairesParMois->keys()->first()]) }}"
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-sm font-medium text-gray-700 transition">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    Exporter en PDF
+                </a>
+            @endif
+
         </div>
 
     </div>
@@ -130,125 +144,140 @@
 
     </form>
 
-    <!-- Tableau -->
-    <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4_25px_rgba(0,0,0,0.04)] overflow-hidden">
+    <!-- Liste groupée par mois -->
 
-   <div class="overflow-x-auto max-h-[650px] overflow-y-auto">
-        <table class="w-full min-w-[900px]">
-            <thead class="bg-orange-50">
-                <tr>
-                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Employé</th>
-                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Période</th>
-                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Salaire brut</th>
-                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Primes</th>
-                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Avance</th>
-                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Net à payer</th>
-                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
-                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
-                </tr>
-            </thead>
+    @php
+        $moisFr = [
+            1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril',
+            5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
+            9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre',
+        ];
+    @endphp
 
-            <tbody class="divide-y divide-gray-100">
+    @forelse($salairesParMois as $periode => $salairesDuMois)
 
-                @forelse($salaires as $salaire)
-                    @php
-                        $net = $salaire->salaire_brut + $salaire->total_primes - $salaire->total_avances;
-                    @endphp
-                    <tr class="hover:bg-gray-50 transition">
+        @php
+            [$anneePeriode, $moisPeriode] = array_pad(explode('-', $periode), 2, null);
+            $labelMois = ($moisFr[(int) $moisPeriode] ?? $periode) . ' ' . $anneePeriode;
 
-                        <td class="px-6 py-4">
-                            <span class="font-semibold text-gray-900 text-sm">{{ $salaire->employe->matricule_nom_complet ?? '_' }}</span>
-                        </td>
+            $netMois   = $salairesDuMois->sum(fn ($s) => $s->salaire_brut + $s->total_primes - $s->total_avances);
+            $payesMois = $salairesDuMois->where('statut', 'paye')->count();
+        @endphp
 
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            {{ $salaire->periode }}
-                        </td>
+        <div class="mb-8">
 
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            {{ number_format($salaire->salaire_brut, 2) }} DT
-                        </td>
-
-                        <td class="px-6 py-4 text-sm text-green-600 font-medium">
-                            +{{ number_format($salaire->total_primes, 2) }} DT
-                        </td>
-
-                        <td class="px-6 py-4 text-sm font-semibold text-red-500">
-                            -{{ number_format($salaire->total_avances, 2) }} DT
-                        </td>
-
-                        <td class="px-6 py-4 text-sm font-semibold text-gray-900">
-                            {{ number_format($net, 2) }} DT
-                        </td>
-
-                        <td class="px-6 py-4">
-                            {{-- Badge cohérent avec les autres modules (Contrat, Employe, Congé) --}}
-                            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium {{ $salaire->statut_badge['classes'] }}">
-                                @if($salaire->statut === 'paye')
-                                    <i class="fa-solid fa-check"></i>
-                                @else
-                                    <i class="fa-solid fa-clock"></i>
-                                @endif
-                                {{ $salaire->statut_badge['label'] }}
-                            </span>
-                            @if($salaire->statut === 'paye' && $salaire->date_paiement)
-                                <div class="text-[11px] text-gray-400 mt-1">
-                                    le {{ $salaire->date_paiement->format('d/m/Y') }}
-                                </div>
-                            @endif
-                        </td>
-
-                        <td class="px-6 py-4">
-                            @if($salaire->statut === 'paye')
-                                <form action="{{ route('employes.salaires.annuler', $salaire->id) }}" method="POST"
-                                        onsubmit="return confirm('Annuler ce paiement ?');">
-                                    @csrf
-                                    <button type="submit"
-                                        class="px-3 py-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 text-xs font-medium transition">
-                                        Annuler paiement
-                                    </button>
-                                </form>
-                            @else
-                                <form action="{{ route('employes.salaires.payer', $salaire->id) }}" method="POST"
-                                        onsubmit="return confirm('Marquer ce salaire comme payé ?');">
-                                    @csrf
-                                    <button type="submit"
-                                        class="px-3 py-1.5 rounded-lg bg-[#E2721B] hover:bg-[#D16212] text-white text-xs font-medium transition">
-                                        Marquer payé
-                                    </button>
-                                </form>
-                            @endif
-                        </td>
-
-                    </tr>
-
-                @empty
-
-                    <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-gray-400 text-sm">
-                            Aucun salaire trouvé.
-                        </td>
-                    </tr>
-
-                @endforelse
-
-            </tbody>
-
-                </table>
-    </div>
-
-</div>
-
-    <!-- Pagination -->
-    @if(isset($salaires) && $salaires instanceof \Illuminate\Pagination\LengthAwarePaginator)
-        <div class="flex justify-between items-center mt-5">
-            <span class="text-sm text-gray-500">
-                Affichage {{ $salaires->firstItem() ?? 0 }} - {{ $salaires->lastItem() ?? 0 }} sur {{ $salaires->total() }} salaires
-            </span>
-            <div class="flex items-center gap-2">
-                {{ $salaires->onEachSide(1)->links() }}
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h2 class="text-base font-bold text-gray-900">{{ $labelMois }}</h2>
+                <span class="text-xs text-gray-400 flex items-center gap-3">
+                    {{ $payesMois }}/{{ $salairesDuMois->count() }} payé(s)
+                    · <span class="font-semibold text-gray-600">{{ number_format($netMois, 2) }} DT</span> net
+                    <a href="{{ route('employes.salaires.export-pdf', ['periode' => $periode]) }}"
+                        target="_blank"
+                        title="Exporter {{ $labelMois }} en PDF"
+                        class="text-gray-400 hover:text-[#E2721B] transition">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </a>
+                </span>
             </div>
+
+            <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[850px]">
+                        <thead class="bg-orange-50">
+                            <tr>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Employé</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Salaire brut</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Primes</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Avance</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Net à payer</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Statut</th>
+                                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-gray-100">
+
+                            @foreach($salairesDuMois as $salaire)
+                                @php
+                                    $net = $salaire->salaire_brut + $salaire->total_primes - $salaire->total_avances;
+                                @endphp
+                                <tr class="hover:bg-gray-50 transition">
+
+                                    <td class="px-6 py-4">
+                                        <span class="font-semibold text-gray-900 text-sm">{{ $salaire->employe->matricule_nom_complet ?? '_' }}</span>
+                                    </td>
+
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        {{ number_format($salaire->salaire_brut, 2) }} DT
+                                    </td>
+
+                                    <td class="px-6 py-4 text-sm text-green-600 font-medium">
+                                        +{{ number_format($salaire->total_primes, 2) }} DT
+                                    </td>
+
+                                    <td class="px-6 py-4 text-sm font-semibold text-red-500">
+                                        -{{ number_format($salaire->total_avances, 2) }} DT
+                                    </td>
+
+                                    <td class="px-6 py-4 text-sm font-semibold text-gray-900">
+                                        {{ number_format($net, 2) }} DT
+                                    </td>
+
+                                    <td class="px-6 py-4">
+                                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium {{ $salaire->statut_badge['classes'] }}">
+                                            @if($salaire->statut === 'paye')
+                                                <i class="fa-solid fa-check"></i>
+                                            @else
+                                                <i class="fa-solid fa-clock"></i>
+                                            @endif
+                                            {{ $salaire->statut_badge['label'] }}
+                                        </span>
+                                        @if($salaire->statut === 'paye' && $salaire->date_paiement)
+                                            <div class="text-[11px] text-gray-400 mt-1">
+                                                le {{ $salaire->date_paiement->format('d/m/Y') }}
+                                            </div>
+                                        @endif
+                                    </td>
+
+                                    <td class="px-6 py-4">
+                                        @if($salaire->statut === 'paye')
+                                            <form action="{{ route('employes.salaires.annuler', $salaire->id) }}" method="POST"
+                                                    onsubmit="return confirm('Annuler ce paiement ?');">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="px-3 py-1.5 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 text-xs font-medium transition">
+                                                    Annuler paiement
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form action="{{ route('employes.salaires.payer', $salaire->id) }}" method="POST"
+                                                    onsubmit="return confirm('Marquer ce salaire comme payé ?');">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="px-3 py-1.5 rounded-lg bg-[#E2721B] hover:bg-[#D16212] text-white text-xs font-medium transition">
+                                                    Marquer payé
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </td>
+
+                                </tr>
+                            @endforeach
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
-    @endif
+
+    @empty
+
+        <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-12 text-center text-gray-400 text-sm">
+            Aucun salaire trouvé.
+        </div>
+
+    @endforelse
 
     <!-- Statistiques -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-8">

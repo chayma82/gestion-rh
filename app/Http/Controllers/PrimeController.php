@@ -41,9 +41,15 @@ class PrimeController extends Controller
 
     public function create()
     {
-        $employes = Employe::whereHas('contrats', function ($query) {
-            $query->where('statut', 'actif');
-        })->get();
+        // Correctif : filtrage par tenant_id ajouté, sinon tous les
+        // employés actifs de tous les tenants remontaient dans le
+        // formulaire d'ajout de prime.
+        $employes = Employe::where('tenant_id', current_tenant_id())
+            ->whereHas('contrats', function ($query) {
+                $query->where('statut', 'actif');
+            })
+            ->orderBy('nom')
+            ->get();
 
         return view('employes.primes.create', compact('employes'));
     }
@@ -59,7 +65,12 @@ class PrimeController extends Controller
 
         DB::transaction(function () use ($validated) {
 
-            $employe = Employe::findOrFail($validated['employe_id']);
+            // Correctif : on force le tenant_id courant lors du lookup,
+            // la règle de validation 'exists' ne vérifiant pas le tenant.
+            // Sans ça, un employe_id d'un autre tenant pouvait être forgé
+            // dans la requête.
+            $employe = Employe::where('tenant_id', current_tenant_id())
+                ->findOrFail($validated['employe_id']);
 
             $contrat = $employe->contrats()
                 ->where('statut', 'actif')
@@ -108,6 +119,10 @@ class PrimeController extends Controller
 
     public function destroy(Prime $prime)
     {
+        // Correctif : vérifier que la prime appartient bien au tenant
+        // courant avant toute suppression (protection route-model-binding).
+        abort_unless($prime->tenant_id === current_tenant_id(), 403);
+
         DB::transaction(function () use ($prime) {
 
             $periode = $prime->date_prime->format('Y-m');

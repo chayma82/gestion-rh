@@ -17,7 +17,8 @@ class VerifierContratsExpirants extends Command
 
     public function handle()
     {
-        foreach ([30, 60] as $jours) {
+        // 60 et 30 jours avant l'échéance, puis le jour même (0 = aujourd'hui).
+        foreach ([60, 30, 0] as $jours) {
 
             $dateCible = Carbon::today()->addDays($jours);
 
@@ -31,8 +32,11 @@ class VerifierContratsExpirants extends Command
 
                 // Anti-doublon : si la commande tourne plusieurs fois le même
                 // jour (ou est relancée manuellement), on ne renotifie pas.
-                // On se base maintenant sur reference_id (= contrat->id),
-                // plus fiable qu'un "like" sur le message.
+                // On se base sur reference_id (= contrat->id) + la date du
+                // jour : comme un contrat donné n'a qu'une seule date_fin,
+                // il ne peut correspondre qu'à UN SEUL des trois paliers
+                // (60/30/0) à un jour donné, donc pas besoin de distinguer
+                // le palier dans la vérification.
                 //
                 // IMPORTANT : ce contrôle doit se faire AVANT la boucle sur
                 // les destinataires, pas dedans — sinon dès qu'un premier
@@ -40,7 +44,6 @@ class VerifierContratsExpirants extends Command
                 // sautés au prochain passage de la commande le même jour.
                 $dejaNotifie = Notification::where('type', 'contrat')
                     ->where('reference_id', $contrat->id)
-                    ->where('message', 'like', "%{$jours} jours%")
                     ->whereDate('date_reception', Carbon::today())
                     ->exists();
 
@@ -59,7 +62,8 @@ class VerifierContratsExpirants extends Command
                     NotificationService::contratBientotExpire($contrat, $jours, $utilisateurId);
                 }
 
-                $this->info("Notification créée : contrat {$contrat->numcontrat} ({$jours} jours) pour {$destinataires->count()} destinataire(s).");
+                $libelle = $jours === 0 ? "aujourd'hui" : "{$jours} jours";
+                $this->info("Notification créée : contrat {$contrat->numcontrat} ({$libelle}) pour {$destinataires->count()} destinataire(s).");
             }
 
         }

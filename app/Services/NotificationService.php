@@ -84,14 +84,15 @@ class NotificationService
             ? Carbon::parse($contrat->date_fin)->format('Y-m-d')
             : 'date non définie';
 
-        return self::creerPourUtilisateur(
-            $utilisateurId,
-            'contrat',
-            'Contrat arrivant à expiration',
-            "Le contrat {$contrat->numcontrat} de {$contrat->employe->nom_complet} expire dans {$joursRestants} jours (le {$dateFinFormatee}).",
-            $contrat->id,
-            $contrat->tenant_id
-        );
+        // $joursRestants = 0 correspond au jour même de l'expiration
+        // (le contrat est encore "actif" ce jour-là, il ne bascule en
+        // "expire" que le lendemain — voir ExpirerContrats).
+        $titre   = $joursRestants === 0 ? 'Contrat expirant aujourd\'hui' : 'Contrat arrivant à expiration';
+        $message = $joursRestants === 0
+            ? "Le contrat {$contrat->numcontrat} de {$contrat->employe->nom_complet} expire aujourd'hui ({$dateFinFormatee})."
+            : "Le contrat {$contrat->numcontrat} de {$contrat->employe->nom_complet} expire dans {$joursRestants} jours (le {$dateFinFormatee}).";
+
+        return self::creerPourUtilisateur($utilisateurId, 'contrat', $titre, $message, $contrat->id, $contrat->tenant_id);
     }
 
     /**
@@ -134,8 +135,9 @@ class NotificationService
     }
 
     /**
-     * À appeler quand une facture vient de passer au statut "en_retard"
-     * (ex: dans factures:maj-statuts).
+     * Générique — conservée pour compatibilité, mais pour factures:maj-statuts
+     * on utilise désormais les deux méthodes spécifiques ci-dessous, qui
+     * portent une action claire selon le sens du flux (achat vs vente).
      */
     public static function factureEnRetard($facture, int $utilisateurId): Notification
     {
@@ -147,6 +149,53 @@ class NotificationService
             $facture->id,
             $facture->tenant_id
         );
+    }
+
+    /**
+     * Facture de VENTE en retard : c'est le client qui nous doit de l'argent,
+     * l'action attendue est de le relancer.
+     */
+    public static function factureVenteARelancer($facture, int $utilisateurId): Notification
+    {
+        return self::creerPourUtilisateur(
+            $utilisateurId,
+            'facture',
+            'Facture client à relancer',
+            "La facture #{$facture->numFacture} est en retard de paiement : pensez à contacter le client.",
+            $facture->id,
+            $facture->tenant_id
+        );
+    }
+
+    /**
+     * Facture d'ACHAT en retard : c'est nous qui devons de l'argent au
+     * fournisseur, l'action attendue est de la payer.
+     */
+    public static function factureAchatAPayer($facture, int $utilisateurId): Notification
+    {
+        return self::creerPourUtilisateur(
+            $utilisateurId,
+            'facture',
+            'Facture fournisseur à payer',
+            "La facture #{$facture->numFacture} est en retard : à régler auprès du fournisseur.",
+            $facture->id,
+            $facture->tenant_id
+        );
+    }
+
+    /**
+     * À appeler avant le jour de paiement des salaires configuré
+     * (ParametrePaie::jour_paiement), typiquement à J-7, J-2 et J.
+     * $joursRestants = 0 pour "c'est aujourd'hui".
+     */
+    public static function salairePaiementProche(int $tenantId, string $periode, int $joursRestants, int $utilisateurId): Notification
+    {
+        $titre   = $joursRestants === 0 ? 'Paiement des salaires aujourd\'hui' : 'Paiement des salaires à venir';
+        $message = $joursRestants === 0
+            ? "C'est aujourd'hui le jour de paiement des salaires pour la période {$periode}."
+            : "Le paiement des salaires pour la période {$periode} est prévu dans {$joursRestants} jour(s).";
+
+        return self::creerPourUtilisateur($utilisateurId, 'facture', $titre, $message, null, $tenantId);
     }
 
     /**
