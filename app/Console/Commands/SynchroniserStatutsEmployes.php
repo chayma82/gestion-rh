@@ -70,12 +70,13 @@ class SynchroniserStatutsEmployes extends Command
                 // l'employé sort de cette requête (elle filtre sur
                 // statutEmploye = 'actif') et n'est plus re-traité tant qu'il
                 // n'est pas revenu actif entre-temps.
-                // TODO : filtrer sur les utilisateurs RH/admin du tenant si
-                // votre modèle Utilisateur expose un rôle/scope pour ça.
+                //
+                // Seuls les utilisateurs ayant acces_rh (ou acces_admin)
+                // sont notifiés qu'un employé part en congé.
                 $conge = $employe->conges->first();
 
                 if ($conge) {
-                    $destinataires = Utilisateur::where('tenant_id', $employe->tenant_id)->pluck('id');
+                    $destinataires = Utilisateur::destinatairesNotification($employe->tenant_id, 'employe');
 
                     foreach ($destinataires as $utilisateurId) {
                         NotificationService::employeDebutConge(
@@ -108,9 +109,10 @@ class SynchroniserStatutsEmployes extends Command
                     // Pas d'anti-doublon nécessaire : une fois sorti de
                     // "en_conge", l'employé ne sera plus re-traité par cette
                     // requête tant qu'il ne repart pas en congé.
-                    // TODO : filtrer sur les utilisateurs RH/admin du tenant
-                    // si votre modèle Utilisateur expose un rôle/scope pour ça.
-                    $destinataires = Utilisateur::where('tenant_id', $employe->tenant_id)->pluck('id');
+                    //
+                    // Seuls les utilisateurs ayant acces_rh (ou acces_admin)
+                    // sont notifiés du retour de congé d'un employé.
+                    $destinataires = Utilisateur::destinatairesNotification($employe->tenant_id, 'employe');
 
                     foreach ($destinataires as $utilisateurId) {
                         NotificationService::employeRetourConge($employe, $utilisateurId);

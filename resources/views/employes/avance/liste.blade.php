@@ -5,7 +5,7 @@
 <div class="max-w-4xl mx-auto">
 
     <x-Employeinfo_conge :employe="$employe" active="avances">
-        
+
     </x-Employeinfo_conge>
 
     <x-card>

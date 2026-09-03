@@ -2,15 +2,31 @@
 
 @section('content')
 
+@php
+    // Droits d'accès du rôle de l'utilisateur connecté : ils déterminent
+    // les blocs du tableau de bord visibles (mêmes règles que dans le menu).
+    $utilisateur = current_utilisateur();
+    $accesAdmin = (bool) $utilisateur?->role?->acces_admin;
+    $accesFacturation = (bool) $utilisateur?->role?->acces_facturation;
+    $accesRh = (bool) $utilisateur?->role?->acces_rh;
+@endphp
+
 <div class="max-w-7xl mx-auto">
 
     <h1 class="text-2xl font-bold text-gray-900 mb-6">
         Tableau de bord exécutif
     </h1>
 
+    @if(!$accesRh && !$accesFacturation)
+        <div class="mb-6 px-4 py-3 rounded-lg bg-orange-50 text-orange-700 text-sm border border-orange-200">
+            Votre rôle ne donne accès à aucune statistique sur ce tableau de bord.
+        </div>
+    @endif
+
     {{-- ============================================================ --}}
     {{-- Cartes statistiques RH --}}
     {{-- ============================================================ --}}
+    @if($accesRh)
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
 
         <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-5">
@@ -56,10 +72,12 @@
         </div>
 
     </div>
+    @endif
 
     {{-- ============================================================ --}}
     {{-- Cartes statistiques FACTURES (achats & ventes) --}}
     {{-- ============================================================ --}}
+    @if($accesFacturation)
     <div class="flex items-center justify-between mb-3 mt-2">
         <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Facturation</h2>
         <div class="flex items-center gap-3 text-xs">
@@ -121,10 +139,12 @@
         </div>
 
     </div>
+    @endif
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <div class="grid grid-cols-1 {{ $accesRh ? 'lg:grid-cols-3' : '' }} gap-6 mb-6">
 
         {{-- Graphique de croissance --}}
+        @if($accesRh)
         <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-6">
 
             <div class="flex items-center justify-between mb-8">
@@ -163,6 +183,7 @@
             </div>
 
         </div>
+        @endif
 
         {{-- Notifications : mêmes données que le topbar (table notification réelle) --}}
         <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] p-6">
@@ -205,6 +226,7 @@
     {{-- ============================================================ --}}
     {{-- Prochaines échéances (achats + ventes) --}}
     {{-- ============================================================ --}}
+    @if($accesFacturation)
     <div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h3 class="text-lg font-semibold text-gray-900">Prochaines échéances</h3>
@@ -269,6 +291,7 @@
             </table>
         </div>
     </div>
+    @endif
 
 </div>
 

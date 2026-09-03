@@ -112,6 +112,10 @@
                     <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         Statut
                     </th>
+
+                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Justificatif
+                    </th>
                 </tr>
             </thead>
 
@@ -158,12 +162,23 @@
 
                         </td>
 
+                        <td class="px-6 py-4">
+                            @if($conge->justificatif)
+                                <a href="{{ route('employes.conges.justificatif', $conge->id) }}" target="_blank"
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 text-[#E2721B] hover:bg-orange-100 text-xs font-semibold transition">
+                                    <i class="fa-solid fa-file-arrow-down"></i> Voir
+                                </a>
+                            @else
+                                <span class="text-xs text-gray-400">—</span>
+                            @endif
+                        </td>
+
                     </tr>
 
                 @empty
 
                     <tr>
-                        <td colspan="6"
+                        <td colspan="7"
                             class="px-6 py-12 text-center text-gray-400 text-sm">
                             Aucun congé trouvé.
                         </td>

@@ -16,6 +16,15 @@ class Role extends Model
     protected $fillable = [
         'tenant_id',
         'nom',
+        'acces_admin',
+        'acces_facturation',
+        'acces_rh',
+    ];
+
+    protected $casts = [
+        'acces_admin' => 'boolean',
+        'acces_facturation' => 'boolean',
+        'acces_rh' => 'boolean',
     ];
 
     public function tenant()

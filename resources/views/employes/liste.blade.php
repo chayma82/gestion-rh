@@ -144,9 +144,11 @@
 
 <!-- Tableau -->
 
-<div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4_25px_rgba(0,0,0,0.04)] overflow-hidden">
+<div class="bg-white rounded-2xl border border-gray-200/60 shadow-[0_4px_25px_rgba(0,0,0,0.04)] overflow-hidden">
 
-    <table class="w-full">
+    <div class="overflow-x-auto max-h-[650px] overflow-y-auto">
+
+        <table class="w-full min-w-[900px]">
 
         <thead class="bg-orange-50">
 
@@ -186,9 +188,9 @@
             @forelse($employes as $employe)
 
                 @php
-    $contrat = $employe->contrat_recent;
-    $statutBadge = $employe->statut_badge;
-@endphp
+                    $contrat = $employe->contrat_recent;
+                    $statutBadge = $employe->statut_badge;
+                @endphp
 
 
                 <tr class="hover:bg-gray-50 transition">
@@ -299,6 +301,7 @@
         </tbody>
 
     </table>
+    </div>
 
 </div>
 

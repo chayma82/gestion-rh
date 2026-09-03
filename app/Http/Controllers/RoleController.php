@@ -30,9 +30,15 @@ class RoleController extends Controller
                 'required', 'string', 'max:50',
                 Rule::unique('role')->where(fn ($q) => $q->where('tenant_id', current_tenant_id())),
             ],
+            'acces_admin' => ['sometimes', 'boolean'],
+            'acces_facturation' => ['sometimes', 'boolean'],
+            'acces_rh' => ['sometimes', 'boolean'],
         ]);
 
         $validated['tenant_id'] = current_tenant_id();
+        $validated['acces_admin'] = $request->boolean('acces_admin');
+        $validated['acces_facturation'] = $request->boolean('acces_facturation');
+        $validated['acces_rh'] = $request->boolean('acces_rh');
 
         Role::create($validated);
 
@@ -45,12 +51,24 @@ class RoleController extends Controller
     {
         $role = Role::where('tenant_id', current_tenant_id())->findOrFail($id);
 
+        if (strtolower($role->nom) === 'admin') {
+            return redirect()
+                ->route('roles.index')
+                ->withErrors(['role' => "Le rôle Admin est protégé et ne peut pas être modifié."]);
+        }
+
         return view('roles.edit', compact('role'));
     }
 
     public function update(Request $request, int $id)
     {
         $role = Role::where('tenant_id', current_tenant_id())->findOrFail($id);
+
+        if (strtolower($role->nom) === 'admin') {
+            return back()->withErrors([
+                'role' => "Le rôle Admin est protégé et ne peut pas être modifié.",
+            ]);
+        }
 
         $validated = $request->validate([
             'nom' => [
@@ -59,7 +77,14 @@ class RoleController extends Controller
                     ->where(fn ($q) => $q->where('tenant_id', current_tenant_id()))
                     ->ignore($role->id),
             ],
+            'acces_admin' => ['sometimes', 'boolean'],
+            'acces_facturation' => ['sometimes', 'boolean'],
+            'acces_rh' => ['sometimes', 'boolean'],
         ]);
+
+        $validated['acces_admin'] = $request->boolean('acces_admin');
+        $validated['acces_facturation'] = $request->boolean('acces_facturation');
+        $validated['acces_rh'] = $request->boolean('acces_rh');
 
         $role->update($validated);
 
@@ -71,6 +96,12 @@ class RoleController extends Controller
     public function destroy(int $id)
     {
         $role = Role::where('tenant_id', current_tenant_id())->findOrFail($id);
+
+        if (strtolower($role->nom) === 'admin') {
+            return back()->withErrors([
+                'role' => "Le rôle Admin est protégé et ne peut pas être supprimé.",
+            ]);
+        }
 
         if ($role->utilisateurs()->exists()) {
             return back()->withErrors([

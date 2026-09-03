@@ -4,7 +4,7 @@
 ])
 @php
     $contrat = $employe->contrat_recent;
-    
+
 @endphp
 <div class="flex items-start justify-between mb-6">
 
@@ -46,6 +46,12 @@
         class="pb-3 text-sm font-medium border-b-2 transition
         {{ $active === 'informations' ? 'border-[#E2721B] text-[#E2721B]' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
         Informations
+    </a>
+
+    <a href="{{ route('employe.contrat.index', $employe->id) }}"
+        class="pb-3 text-sm font-medium border-b-2 transition
+        {{ $active === 'contrats' ? 'border-[#E2721B] text-[#E2721B]' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+        Liste des Contrats
     </a>
 
     <a href="{{ route('employe.conge.index', $employe->id) }}"

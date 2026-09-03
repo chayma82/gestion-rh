@@ -51,12 +51,9 @@ class VerifierContratsExpirants extends Command
                     continue;
                 }
 
-                // TODO : filtrer sur les utilisateurs RH/admin du tenant si
-                // votre modèle Utilisateur expose un rôle/scope pour ça.
-                // En l'état, on notifie tous les utilisateurs du tenant du
-                // contrat (comportement precedent : un seul destinataire non
-                // défini, ce qui plantait faute de paramètre).
-                $destinataires = Utilisateur::where('tenant_id', $contrat->tenant_id)->pluck('id');
+                // Seuls les utilisateurs ayant acces_rh (ou acces_admin)
+                // sont notifiés d'un contrat qui expire bientôt.
+                $destinataires = Utilisateur::destinatairesNotification($contrat->tenant_id, 'contrat');
 
                 foreach ($destinataires as $utilisateurId) {
                     NotificationService::contratBientotExpire($contrat, $jours, $utilisateurId);

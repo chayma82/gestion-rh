@@ -87,12 +87,16 @@
                                     <i class="fa-solid fa-pen text-xs"></i>
                                 </a>
                                 <!-- Archiver au lieu de supprimer -->
-                                <a href="{{ route('clients.archiver', $client->id) }}"
-                                    onclick="return confirm('Archiver ce client ?');"
-                                    class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition"
-                                    title="Archiver">
-                                    <i class="fa-solid fa-box-archive text-xs"></i>
-                                </a>
+                                <form action="{{ route('clients.archiver', $client->id) }}" method="POST"
+                                    onsubmit="return confirm('Archiver ce client ?');">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                        class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition"
+                                        title="Archiver">
+                                        <i class="fa-solid fa-box-archive text-xs"></i>
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>

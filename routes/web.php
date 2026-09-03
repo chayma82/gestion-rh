@@ -3,7 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AvanceController;
 use App\Http\Controllers\AvanceperController;
-use App\Http\Controllers\CongeController;
+use App\Http\Controllers\ContratperController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\CongeperController;
@@ -49,7 +49,7 @@ Route::put('/employes/{employe}', [EmployeController::class, 'update'])
 
 Route::delete('/employes/{employe}', [EmployeController::class, 'destroy'])
     ->name('employes.destroy');
-// archive et desarchive
+
 Route::get('/employes/archives', [EmployeController::class, 'archives'])
     ->name('employes.archives');
 
@@ -68,6 +68,10 @@ Route::get('/employes/{employe}/avances', [AvanceperController::class, 'index'])
 Route::get('/employes/{employe}/primes', [PrimeperController::class, 'index'])
     ->name('employe.prime.index');
 
+//employe-contrat
+Route::get('/employes/{employe}/contrats', [ContratperController::class, 'index'])
+    ->name('employe.contrat.index');
+
 //factures
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -79,6 +83,8 @@ Route::prefix('employes/conges')->name('employes.conges.')->group(function () {
     Route::get('/create', [CongesController::class, 'create'])->name('create');
     Route::post('/', [CongesController::class, 'store'])->name('store');
     Route::get('/{conge}/justificatif', [CongesController::class, 'telechargerJustificatif'])->name('justificatif');
+Route::get('/conges/{conge}/justificatif', [CongesController::class, 'telechargerJustificatif'])
+    ->name('employes.conges.justificatif');
 });
 
 //salaires
@@ -135,6 +141,8 @@ Route::put('/contrats/{contrat}/resilier',[ContratController::class,'resilier'])
 
 
 // Authentification
+Route::get('/login', fn () => redirect()->route('auth.authi'));
+Route::get('/logout', fn () => redirect()->route('auth.authi'));
 Route::post('/login', [AuthController::class, 'login'])
     ->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])

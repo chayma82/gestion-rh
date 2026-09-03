@@ -74,6 +74,22 @@
 
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-700">
+                            Type d'entreprise <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <select
+                                name="type_entreprise"
+                                class="w-full appearance-none rounded-lg border border-gray-300 px-4 py-3 outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-500 bg-white text-sm">
+                                <option value="">Sélectionner...</option>
+                                <option value="rh" @selected(old('type_entreprise') == 'rh')>RH (Ressources Humaines / Recrutement)</option>
+                                <option value="autre" @selected(old('type_entreprise') == 'autre')>Autre</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-700">
                             Secteur d'activité <span class="text-red-500">*</span>
                         </label>
                         <div class="relative">

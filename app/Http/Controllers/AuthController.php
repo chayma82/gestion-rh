@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NouvelleDemandeEntrepriseMail;
+use App\Mail\DemandeEntrepriseRecueMail;
 use App\Models\Tenant;
 use App\Models\TenantCategorie;
 use App\Models\Entreprise;
@@ -19,7 +20,11 @@ class AuthController extends Controller
     public function authi()
     {
         if (current_utilisateur()) {
-            return redirect()->route('Dashboard.index');
+            // Le super admin n'a pas de dashboard RH : on l'envoie directement
+            // vers la gestion des tenants, qui est son seul espace de travail.
+            return is_super_admin()
+                ? redirect()->route('tenants.index')
+                : redirect()->route('Dashboard.index');
         }
 
         return view('auth.Auth');
@@ -37,6 +42,7 @@ class AuthController extends Controller
             // Entreprise
             'nom_entreprise'       => 'required|string|max:150',
             'num_fiscal'           => 'required|string|max:50|unique:entreprise,num_fiscal',
+            'type_entreprise'      => 'required|in:rh,autre',
             'secteur_activite'     => 'required|string|max:100',
             'email_entreprise'     => 'required|email|max:150|unique:entreprise,email',
             'telephone_entreprise' => 'nullable|string|max:30',
@@ -68,6 +74,7 @@ class AuthController extends Controller
                 'tenant_id'        => $tenant->id,
                 'nom'              => $validated['nom_entreprise'],
                 'email'            => $validated['email_entreprise'],
+                'type_entreprise'  => $validated['type_entreprise'],
                 'secteur_activite' => $validated['secteur_activite'],
                 'adresse'          => $validated['adresse'],
                 'ville'            => $validated['ville'],
@@ -76,10 +83,19 @@ class AuthController extends Controller
                 'telephone'        => $validated['telephone_entreprise'] ?? null,
             ]);
 
-            $roleAdmin = Role::firstOrCreate([
-                'tenant_id' => $tenant->id,
-                'nom' => 'Admin',
-            ]);
+            // Le rôle Admin créé avec l'entreprise a automatiquement accès
+            // aux 3 modules : Admin, Facturation et RH.
+            $roleAdmin = Role::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'nom' => 'Admin',
+                ],
+                [
+                    'acces_admin' => true,
+                    'acces_facturation' => true,
+                    'acces_rh' => true,
+                ]
+            );
 
             $utilisateur = Utilisateur::create([
                 'tenant_id'     => $tenant->id,
@@ -113,15 +129,28 @@ class AuthController extends Controller
         Mail::to(config('mail.admin_notification_address', config('mail.from.address')))
             ->send(new NouvelleDemandeEntrepriseMail($tenant, $entreprise, $utilisateur));
 
+        // Confirme aussi à l'admin lui-même que sa demande a bien été reçue,
+        // avec le même message que la page auth.successajout.
+        Mail::to($utilisateur->email)
+            ->send(new DemandeEntrepriseRecueMail($tenant, $utilisateur));
+
         return redirect()
-            ->route('auth.success')
-            ->with('nomEntreprise', $tenant->nom);
+            ->route('auth.success', ['entreprise' => $entreprise->id])
+            ->with('nomEntreprise', $tenant->nom)
+            ->with('entreprise', $entreprise);
     }
 
-    public function success()
+    public function success(Request $request)
     {
+        // On recharge l'entreprise depuis son ID passé dans l'URL : ça survit
+        // à un rafraîchissement de page, contrairement aux données flashées
+        // en session qui ne durent qu'une seule requête.
+        $entreprise = Entreprise::find($request->query('entreprise'))
+            ?? session('entreprise');
+
         return view('auth.successajout', [
-            'nomEntreprise' => session('nomEntreprise'),
+            'nomEntreprise' => $entreprise->nom ?? session('nomEntreprise'),
+            'entreprise'    => $entreprise,
         ]);
     }
 
@@ -180,6 +209,13 @@ class AuthController extends Controller
             nomTable: 'utilisateur',
             description: "Connexion réussie de {$utilisateur->email}",
         );
+
+        // Le super admin n'a pas de dashboard RH : on l'envoie directement
+        // vers la gestion des tenants, quoi qu'il ait tenté de visiter avant
+        // d'être redirigé vers le login (pas de redirect()->intended() pour lui).
+        if (is_super_admin()) {
+            return redirect()->route('tenants.index');
+        }
 
         return redirect()->intended(route('Dashboard.index'));
     }

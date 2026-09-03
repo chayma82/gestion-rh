@@ -25,6 +25,15 @@
 
     </div>
 
+    @php
+        // Droits d'accès du rôle de l'utilisateur connecté : ils déterminent
+        // les sections du menu visibles. Un utilisateur sans rôle assigné
+        // ne voit aucune section restreinte (accès par défaut refusé).
+        $accesAdmin = (bool) $utilisateur?->role?->acces_admin;
+        $accesFacturation = (bool) $utilisateur?->role?->acces_facturation;
+        $accesRh = (bool) $utilisateur?->role?->acces_rh;
+    @endphp
+
     <!-- Menu -->
     <ul class="mt-4 flex-1 space-y-1 px-2 overflow-y-auto">
 
@@ -67,6 +76,7 @@
         $primesActif = request()->routeIs('employes.primes.*') || request()->routeIs('employe.prime.index');
     @endphp
 
+    @if($accesRh)
     <li>
 
         <div @class([
@@ -177,6 +187,7 @@
         </ul>
 
     </li>
+    @endif
 
     @php
     // ===== VENTES =====
@@ -213,6 +224,7 @@
 
     <!-- ================= VENTES ================= -->
 
+@if($accesFacturation)
 <li>
 
     <div @class([
@@ -259,10 +271,12 @@
     </ul>
 
 </li>
+@endif
 
 
 <!-- ================= ACHATS ================= -->
 
+@if($accesFacturation)
 <li>
 
     <div @class([
@@ -309,9 +323,11 @@
     </ul>
 
 </li>
+@endif
 
 <!-- ================= PARAMÈTRES ================= -->
 
+@if($accesAdmin)
 <li>
 
     <div @class([
@@ -382,6 +398,7 @@
     </ul>
 
 </li>
+@endif
     </ul>
     <!-- Déconnexion -->
     <div class="px-2 pb-4 border-t border-gray-100 pt-3">

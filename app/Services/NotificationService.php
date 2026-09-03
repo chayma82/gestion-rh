@@ -272,10 +272,16 @@ class NotificationService
 
     /**
      * Dernières notifications d'un utilisateur (limité, pour l'affichage).
+     *
+     * $typesAutorises permet de restreindre aux types de notification
+     * accessibles selon le rôle de l'utilisateur (ex: un RH sans accès
+     * facturation ne doit pas voir les notifications de type 'facture').
+     * Laisser à null pour ne pas filtrer (comportement historique).
      */
-    public static function recentes(int $utilisateurId, int $limite = 5)
+    public static function recentes(int $utilisateurId, int $limite = 5, ?array $typesAutorises = null)
     {
         return Notification::where('utilisateur_id', $utilisateurId)
+            ->when($typesAutorises !== null, fn ($q) => $q->whereIn('type', $typesAutorises))
             ->latest('date_reception')
             ->take($limite)
             ->get();
@@ -287,10 +293,13 @@ class NotificationService
      * Volontairement séparé de recentes() : recentes() est limité, donc
      * compter les non-lues dedans ne reflèterait pas le vrai total si
      * l'utilisateur a plus de $limite notifications non lues.
+     *
+     * $typesAutorises : voir recentes().
      */
-    public static function compterNonLues(int $utilisateurId): int
+    public static function compterNonLues(int $utilisateurId, ?array $typesAutorises = null): int
     {
         return Notification::where('utilisateur_id', $utilisateurId)
+            ->when($typesAutorises !== null, fn ($q) => $q->whereIn('type', $typesAutorises))
             ->where('lue', false)
             ->count();
     }

@@ -11,7 +11,7 @@ use App\Models\Concerns\Loggable;
 
 class Utilisateur extends Authenticatable
 {
-    use HasFactory,Loggable, Notifiable;
+    use HasFactory, Loggable, Notifiable;
 
     protected $table = 'utilisateur';
 
@@ -97,4 +97,40 @@ class Utilisateur extends Authenticatable
         return $this->hasMany(Log::class, 'utilisateur_id');
     }
 
+    /**
+     * Utilisateurs du tenant à notifier pour un type de notification donné
+     * ('facture', 'employe', 'contrat'), selon les accès de leur rôle.
+     *
+     * Un utilisateur avec acces_admin est toujours inclus, quel que soit le
+     * type. Sinon :
+     *   - 'facture'           -> acces_facturation
+     *   - 'employe'/'contrat' -> acces_rh
+     *
+     * Ne renvoie que les utilisateurs actifs du tenant concerné, pour éviter
+     * de notifier un compte désactivé ou un utilisateur d'un autre tenant.
+     *
+     * IMPORTANT : le regroupement acces_admin / acces_facturation / acces_rh
+     * dans un where(function...) est nécessaire — sans lui, le "orWhere"
+     * casserait la contrainte whereHas() et pourrait remonter des
+     * utilisateurs d'un autre tenant.
+     *
+     * @return \Illuminate\Support\Collection<int> Liste des utilisateur_id
+     */
+    public static function destinatairesNotification(int $tenantId, string $type)
+    {
+        return static::where('tenant_id', $tenantId)
+            ->where('actif', true)
+            ->whereHas('role', function ($query) use ($type) {
+                $query->where(function ($q) use ($type) {
+                    $q->where('acces_admin', true);
+
+                    if ($type === 'facture') {
+                        $q->orWhere('acces_facturation', true);
+                    } elseif (in_array($type, ['employe', 'contrat'], true)) {
+                        $q->orWhere('acces_rh', true);
+                    }
+                });
+            })
+            ->pluck('id');
+    }
 }

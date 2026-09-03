@@ -13,7 +13,7 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $clients = Client::actives()
-            ->where('entreprise_id', 1)
+            ->where('entreprise_id', current_entreprise_id())
             ->when($request->q, function ($query) use ($request) {
                 $query->where('nom', 'like', '%' . $request->q . '%');
             })
@@ -29,7 +29,7 @@ class ClientController extends Controller
      */
     public function archiver(Request $request, Client $client)
     {
-        abort_unless($client->entreprise_id === 1, 403);
+        abort_unless($client->entreprise_id === current_entreprise_id(), 403);
 
         $client->update([
             'status' => 'archive'
@@ -44,7 +44,7 @@ class ClientController extends Controller
     public function archives(Request $request)
     {
         $clients = Client::archivees()
-            ->where('entreprise_id', 1)
+            ->where('entreprise_id', current_entreprise_id())
             ->when($request->q, function ($query) use ($request) {
                 $query->where('nom', 'like', '%' . $request->q . '%');
             })
@@ -60,7 +60,7 @@ class ClientController extends Controller
      */
     public function desarchiver(Client $client)
     {
-        abort_unless($client->entreprise_id === 1, 403);
+        abort_unless($client->entreprise_id === current_entreprise_id(), 403);
 
         $client->update([
             'status' => 'actif'
@@ -92,8 +92,8 @@ class ClientController extends Controller
             'matricule_fiscal' => 'required|string|max:50',
         ]);
 
-        $data['tenant_id']     = 1;
-        $data['entreprise_id'] = 1;
+        $data['tenant_id']     = current_tenant_id();
+        $data['entreprise_id'] = current_entreprise_id();
         $data['status']        = 'actif';
 
         Client::create($data);
@@ -108,7 +108,7 @@ class ClientController extends Controller
      */
     public function edit(Client $client)
     {
-        abort_unless($client->entreprise_id === 1, 403);
+        abort_unless($client->entreprise_id === current_entreprise_id(), 403);
 
         return view('clients.edit', compact('client'));
     }
@@ -118,7 +118,7 @@ class ClientController extends Controller
      */
     public function update(Request $request, Client $client)
     {
-        abort_unless($client->entreprise_id === 1, 403);
+        abort_unless($client->entreprise_id === current_entreprise_id(), 403);
 
         $data = $request->validate([
             'nom'              => 'required|string|max:150',

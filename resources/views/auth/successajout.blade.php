@@ -26,7 +26,7 @@
 
         <p class="text-gray-600 text-sm leading-relaxed max-w-lg mx-auto">
             Votre demande de création de compte entreprise pour
-            <span class="font-semibold text-gray-800">{{ $nomEntreprise ?? 'Lumina HRMS' }}</span>
+            <span class="font-semibold text-gray-800">{{ $entreprise->nom ?? $nomEntreprise ?? 'votre entreprise' }},</span>
             a été transmise à nos équipes. Nous reviendrons vers vous par e-mail sous 24 à 48 heures
             pour finaliser la configuration de votre environnement.
         </p>

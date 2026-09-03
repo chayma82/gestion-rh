@@ -1,4 +1,3 @@
-<!-- Placez ce fichier dans : resources/views/emails/nouvelle_demande.blade.php -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -13,9 +12,8 @@
 
         <p>Bonjour,</p>
 
-        <p>Une nouvelle entreprise vient de faire une demande d'inscription sur ..... Voici le détail complet de la demande :</p>
+        <p>Une nouvelle entreprise vient de faire une demande d'inscription . Voici le détail complet de la demande :</p>
 
-        {{-- ===================== ENTREPRISE ===================== --}}
         <h3 style="color:#E2721B; font-size:14px; text-transform:uppercase; letter-spacing:0.05em; margin:24px 0 8px; border-bottom:1px solid #f3f4f6; padding-bottom:8px;">
             Informations de l'entreprise
         </h3>
@@ -28,6 +26,10 @@
             <tr>
                 <td style="padding:6px 0; color:#6b7280; vertical-align:top;">Matricule fiscale</td>
                 <td style="padding:6px 0; font-weight:bold;">{{ $entreprise->num_fiscal }}</td>
+            </tr>
+            <tr>
+                <td style="padding:6px 0; color:#6b7280; vertical-align:top;">Type d'entreprise</td>
+                <td style="padding:6px 0; font-weight:bold;">{{ $entreprise->type_entreprise_label }}</td>
             </tr>
             <tr>
                 <td style="padding:6px 0; color:#6b7280; vertical-align:top;">Secteur d'activité</td>
@@ -103,11 +105,7 @@
             </tr>
         </table>
 
-        <p style="margin-top:24px;">Merci de vous rendre sur le back-office pour examiner et valider (ou refuser) cette demande.</p>
-
-        <p style="margin-top:32px; font-size:12px; color:#9ca3af;">
-            Cet email a été généré automatiquement par la plateforme La Luna HRMS.
-        </p>
+      
 
     </div>
 

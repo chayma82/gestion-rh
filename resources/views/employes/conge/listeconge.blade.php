@@ -23,6 +23,7 @@
                     <th class="text-left pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Type de congé</th>
                     <th class="text-left pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Période</th>
                     <th class="text-left pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Durée</th>
+                    <th class="text-left pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Justificatif</th>
                 </tr>
             </thead>
 
@@ -34,7 +35,7 @@
                                 <span class="w-2 h-2 rounded-full mt-1.5 shrink-0"></span>
                                 <div>
                                     <p class="text-sm font-semibold text-gray-800">{{ $conge->type_conge }}</p>
-                                    <p class="text-xs text-gray-400">{{ $conge->note ?? '' }}</p>
+                                    <p class="text-xs text-gray-400">{{ $conge->motif ?? '' }}</p>
                                 </div>
                             </div>
                         </td>
@@ -44,10 +45,20 @@
                         <td class="py-4 text-sm text-gray-800 font-medium">
                             {{ $conge->date_debut->diffInDays($conge->date_fin) + 1 }} jour(s)
                         </td>
+                        <td class="py-4">
+                            @if($conge->justificatif)
+                                <a href="{{ route('employes.conges.justificatif', $conge->id) }}" target="_blank"
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-50 text-[#E2721B] hover:bg-orange-100 text-xs font-semibold transition">
+                                    <i class="fa-solid fa-file-arrow-down"></i> Voir
+                                </a>
+                            @else
+                                <span class="text-xs text-gray-400">—</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3" class="py-6 text-center text-sm text-gray-400">
+                        <td colspan="4" class="py-6 text-center text-sm text-gray-400">
                             Aucune demande de congé enregistrée.
                         </td>
                     </tr>

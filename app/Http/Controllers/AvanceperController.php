@@ -10,6 +10,6 @@ class AvanceperController extends Controller
     {
         $avances = $employe->avancesalaires()->latest('date_creation')->get();
 
-        return view('employes.avance.listeavance', compact('employe', 'avances'));
+        return view('employes.avance.liste', compact('employe', 'avances'));
     }
 }

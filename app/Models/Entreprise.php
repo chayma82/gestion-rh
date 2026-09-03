@@ -13,10 +13,20 @@ class Entreprise extends Model
 
     public $timestamps = false;
 
+    // Valeurs possibles pour la colonne "type_entreprise" (enum SQL)
+    const TYPE_RH = 'rh';
+    const TYPE_AUTRE = 'autre';
+
+    const TYPES_ENTREPRISE = [
+        self::TYPE_RH    => 'RH (Ressources Humaines / Recrutement)',
+        self::TYPE_AUTRE => 'Autre',
+    ];
+
     protected $fillable = [
         'tenant_id',
         'nom',
         'email',
+        'type_entreprise',
         'secteur_activite',
         'adresse',
         'ville',
@@ -24,6 +34,11 @@ class Entreprise extends Model
         'num_fiscal',
         'telephone',
     ];
+
+    public function getTypeEntrepriseLabelAttribute(): string
+    {
+        return self::TYPES_ENTREPRISE[$this->type_entreprise] ?? $this->type_entreprise;
+    }
 
     public function tenant()
     {

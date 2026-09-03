@@ -45,6 +45,7 @@
             <thead class="bg-orange-50">
                 <tr>
                     <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Nom</th>
+                    <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Accès</th>
                     <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Utilisateurs</th>
                     <th class="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                 </tr>
@@ -54,29 +55,52 @@
                 @forelse($roles as $role)
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-6 py-4 font-semibold text-gray-900">{{ $role->nom }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-wrap gap-1.5">
+                                @if ($role->acces_admin)
+                                    <span class="px-2 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-medium">Admin</span>
+                                @endif
+                                @if ($role->acces_facturation)
+                                    <span class="px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium">Facturation</span>
+                                @endif
+                                @if ($role->acces_rh)
+                                    <span class="px-2 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-medium">RH</span>
+                                @endif
+                                @unless ($role->acces_admin || $role->acces_facturation || $role->acces_rh)
+                                    <span class="text-gray-400 text-xs">Aucun accès</span>
+                                @endunless
+                            </div>
+                        </td>
                         <td class="px-6 py-4 text-sm text-gray-600">{{ $role->utilisateurs_count }}</td>
                         <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <a href="{{ route('roles.edit', $role->id) }}"
-                                    class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center" title="Modifier">
-                                    <i class="fa-regular fa-pen-to-square text-xs"></i>
-                                </a>
+                            @if (strtolower($role->nom) === 'admin')
+                                <span class="inline-flex items-center gap-1.5 text-gray-400 text-xs italic">
+                                    <i class="fa-solid fa-lock text-[10px]"></i>
+                                    Rôle protégé
+                                </span>
+                            @else
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('roles.edit', $role->id) }}"
+                                        class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center" title="Modifier">
+                                        <i class="fa-regular fa-pen-to-square text-xs"></i>
+                                    </a>
 
-                                <form action="{{ route('roles.destroy', $role->id) }}" method="POST"
-                                    onsubmit="return confirm('Supprimer ce rôle ?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                        class="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center" title="Supprimer">
-                                        <i class="fa-regular fa-trash-can text-xs"></i>
-                                    </button>
-                                </form>
-                            </div>
+                                    <form action="{{ route('roles.destroy', $role->id) }}" method="POST"
+                                        onsubmit="return confirm('Supprimer ce rôle ?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center" title="Supprimer">
+                                            <i class="fa-regular fa-trash-can text-xs"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            @endif
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3" class="px-6 py-12 text-center text-gray-400 text-sm">Aucun rôle trouvé.</td>
+                        <td colspan="4" class="px-6 py-12 text-center text-gray-400 text-sm">Aucun rôle trouvé.</td>
                     </tr>
                 @endforelse
 

@@ -57,9 +57,9 @@ class NotifierEcheanceSalaires extends Command
                 continue;
             }
 
-            // TODO : filtrer sur les utilisateurs RH/admin du tenant si votre
-            // modèle Utilisateur expose un rôle/scope pour ça.
-            $destinataires = Utilisateur::where('tenant_id', $parametrePaie->tenant_id)->pluck('id');
+            // Seuls les utilisateurs ayant acces_facturation (ou
+            // acces_admin) sont notifiés du paiement des salaires.
+            $destinataires = Utilisateur::destinatairesNotification($parametrePaie->tenant_id, 'facture');
 
             foreach ($destinataires as $utilisateurId) {
                 NotificationService::salairePaiementProche($parametrePaie->tenant_id, $periode, $joursRestants, $utilisateurId);

@@ -3,12 +3,49 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use App\Models\Utilisateur;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 class NotificationController extends Controller
 {
+    /**
+     * Types de notifications ('facture', 'employe', 'contrat') autorisés
+     * pour l'utilisateur connecté, en fonction des accès de son rôle.
+     *
+     * NB : ceci filtre uniquement ce que voit ce contrôleur. Les méthodes
+     * NotificationService::recentes() et ::compterNonLues() (utilisées par
+     * nonLues() ci-dessous, pour le polling du topbar) doivent appliquer le
+     * même filtre côté service, sinon le badge de notifications non lues
+     * restera incorrect pour un RH par exemple.
+     */
+    private function typesAutorises(): array
+    {
+        $role = Utilisateur::find(current_utilisateur_id())?->role;
+
+        if (!$role) {
+            return [];
+        }
+
+        if ($role->acces_admin) {
+            return ['facture', 'employe', 'contrat'];
+        }
+
+        $types = [];
+
+        if ($role->acces_facturation) {
+            $types[] = 'facture';
+        }
+
+        if ($role->acces_rh) {
+            $types[] = 'employe';
+            $types[] = 'contrat';
+        }
+
+        return $types;
+    }
+
     /**
      * Page complète de l'historique des notifications.
      */
@@ -17,6 +54,7 @@ class NotificationController extends Controller
         $utilisateurId = current_utilisateur_id();
 
         $notifications = Notification::where('utilisateur_id', $utilisateurId)
+            ->whereIn('type', $this->typesAutorises())
             ->latest('date_reception')
             ->paginate(20);
 
@@ -34,38 +72,49 @@ class NotificationController extends Controller
      * sont PAS inclus automatiquement dans la sérialisation JSON — il
      * faudrait les ajouter à $appends sur le modèle Notification pour que
      * $notification->toJson() les inclue tout seul.
+     *
+     * TODO : NotificationService::recentes() et ::compterNonLues() ne
+     * filtrent pas encore par type autorisé. Le filter() ci-dessous corrige
+     * la liste affichée, mais pas le compteur 'nonLues' qui peut donc
+     * inclure des notifications que l'utilisateur ne devrait pas voir.
      */
     public function nonLues()
     {
         $utilisateurId = current_utilisateur_id();
+        $typesAutorises = $this->typesAutorises();
 
-        $notifications = NotificationService::recentes($utilisateurId, 5)->map(function ($n) {
-            return [
-                'id'      => $n->id,
-                'titre'   => $n->titre,
-                'message' => $n->message,
-                'lue'     => $n->lue,
-                'icon'    => $n->icon,
-                'couleur' => $n->couleur,
-                'diff'    => $n->date_reception?->diffForHumans(),
-            ];
-        });
+        $notifications = NotificationService::recentes($utilisateurId, 5, $typesAutorises)
+            ->map(function ($n) {
+                return [
+                    'id'      => $n->id,
+                    'titre'   => $n->titre,
+                    'message' => $n->message,
+                    'lue'     => $n->lue,
+                    'icon'    => $n->icon,
+                    'couleur' => $n->couleur,
+                    'diff'    => $n->date_reception?->diffForHumans(),
+                ];
+            });
 
         return response()->json([
-            'nonLues'       => NotificationService::compterNonLues($utilisateurId),
+            'nonLues'       => NotificationService::compterNonLues($utilisateurId, $typesAutorises),
             'notifications' => $notifications,
         ]);
     }
 
     /**
      * Sécurité : on ne peut marquer comme lue qu'une notification qui nous
-     * appartient. Sans ce contrôle, n'importe quel utilisateur connecté
-     * pouvait marquer comme lue la notification de n'importe qui d'autre
-     * simplement en devinant/changeant l'id dans l'URL.
+     * appartient ET dont le type est autorisé pour notre rôle. Sans ce
+     * contrôle, n'importe quel utilisateur connecté pouvait marquer comme
+     * lue la notification de n'importe qui d'autre simplement en
+     * devinant/changeant l'id dans l'URL.
      */
     public function marquerLue(Request $request, Notification $notification)
     {
-        if ($notification->utilisateur_id !== current_utilisateur_id()) {
+        if (
+            $notification->utilisateur_id !== current_utilisateur_id()
+            || !in_array($notification->type, $this->typesAutorises(), true)
+        ) {
             abort(403);
         }
 
@@ -76,7 +125,10 @@ class NotificationController extends Controller
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'nonLues' => NotificationService::compterNonLues($notification->utilisateur_id),
+                'nonLues' => NotificationService::compterNonLues(
+                    $notification->utilisateur_id,
+                    $this->typesAutorises()
+                ),
             ]);
         }
 
@@ -88,6 +140,7 @@ class NotificationController extends Controller
         $utilisateurId = current_utilisateur_id();
 
         Notification::where('utilisateur_id', $utilisateurId)
+            ->whereIn('type', $this->typesAutorises())
             ->where('lue', false)
             ->update([
                 'lue'          => true,
@@ -113,7 +166,10 @@ class NotificationController extends Controller
      */
     public function ouvrir(Notification $notification)
     {
-        if ($notification->utilisateur_id !== current_utilisateur_id()) {
+        if (
+            $notification->utilisateur_id !== current_utilisateur_id()
+            || !in_array($notification->type, $this->typesAutorises(), true)
+        ) {
             abort(403);
         }
 

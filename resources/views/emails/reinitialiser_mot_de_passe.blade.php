@@ -10,7 +10,7 @@
     <div style="max-width:520px; margin:0 auto; background:#ffffff; border-radius:12px; padding:32px; border:1px solid #e5e7eb; text-align:center;">
 
         <div style="width:64px; height:64px; background:#fff7ed; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:16px;">
-            <span style="font-size:28px;">🔑</span>
+            <span style="font-size:28px;"></span>
         </div>
 
         <h2 style="color:#9A2A00; margin-top:0;">Réinitialisation de mot de passe</h2>
@@ -20,7 +20,7 @@
         </p>
 
         <p style="text-align:left;">
-            Vous avez demandé à réinitialiser votre mot de passe sur La Luna HRMS.
+            Vous avez demandé à réinitialiser votre mot de passe .
             Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.
             Ce lien est valable <strong>60 minutes</strong> et ne peut être utilisé qu'une seule fois.
         </p>

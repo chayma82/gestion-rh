@@ -68,8 +68,9 @@ class MettreAJourStatutFactures extends Command
      * Pas d'anti-doublon nécessaire : une fois "en_retard", la facture sort
      * des requêtes ci-dessus et n'est plus jamais re-traitée.
      *
-     * TODO : filtrer sur les utilisateurs RH/compta/admin du tenant si votre
-     * modèle Utilisateur expose un rôle/scope pour ça.
+     * Seuls les utilisateurs ayant acces_facturation (ou acces_admin) sont
+     * notifiés — un responsable RH sans accès facturation ne doit pas
+     * recevoir ces notifications.
      */
     protected function notifierRetard($facture, string $type): void
     {
@@ -77,7 +78,7 @@ class MettreAJourStatutFactures extends Command
             return;
         }
 
-        $destinataires = Utilisateur::where('tenant_id', $facture->tenant_id)->pluck('id');
+        $destinataires = Utilisateur::destinatairesNotification($facture->tenant_id, 'facture');
 
         foreach ($destinataires as $utilisateurId) {
             if ($type === 'vente') {

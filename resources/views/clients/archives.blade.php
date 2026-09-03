@@ -37,11 +37,15 @@
                             <td class="px-6 py-4 text-sm text-gray-600">{{ $client->telephone ?? '—' }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600">{{ $client->matricule_fiscal ?? '—' }}</td>
                             <td class="px-6 py-4">
-                                <a href="{{ route('clients.desarchiver', $client->id) }}"
-                                    onclick="return confirm('Restaurer ce client ?');"
-                                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 text-xs font-semibold transition">
-                                    <i class="fa-solid fa-rotate-left"></i> Restaurer
-                                </a>
+                                <form action="{{ route('clients.desarchiver', $client->id) }}" method="POST"
+                                    onsubmit="return confirm('Restaurer ce client ?');">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit"
+                                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 text-xs font-semibold transition">
+                                        <i class="fa-solid fa-rotate-left"></i> Restaurer
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     @empty

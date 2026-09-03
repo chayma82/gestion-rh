@@ -24,14 +24,14 @@
         @method('PUT')
 
          <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Nom du fournisseur</label>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Nom du client</label>
             <input type="text" name="nom" value="{{ $client->nom }}" readonly
                 class="w-full border border-gray-200 bg-gray-100 rounded-lg px-3 py-2.5 text-sm text-gray-600 cursor-not-allowed">
         </div>
         <div>
             <label class="block text-xs font-medium text-gray-600 mb-1">Matricule fiscal</label>
            <input type="text" name="matricule_fiscal" value="{{ $client->matricule_fiscal }}" readonly
-                class="w-full border border-gray-200 bg-gray-100 rounded-lg px-3 py-2.5 text-sm text-gray-600 cursor-not-allowed">         
+                class="w-full border border-gray-200 bg-gray-100 rounded-lg px-3 py-2.5 text-sm text-gray-600 cursor-not-allowed">
         </div>
 
         <div class="grid grid-cols-2 gap-4">

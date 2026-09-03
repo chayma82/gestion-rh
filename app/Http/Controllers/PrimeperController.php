@@ -10,6 +10,6 @@ class PrimeperController extends Controller
     {
         $primes = $employe->primes()->latest('date_creation')->get();
 
-        return view('employes.prime.listeprime', compact('employe', 'primes'));
+        return view('employes.prime.liste', compact('employe', 'primes'));
     }
 }
